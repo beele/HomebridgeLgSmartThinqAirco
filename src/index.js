@@ -38,17 +38,34 @@ function HomebridgeLgAirco(log, config) {
         this.wideq
             .status(this.deviceId)
             .then((status) => {
-                this.state.isOn = status.Operation.value === '@AC_MAIN_OPERATION_RIGHT_ON_W';
-                this.state.isCooling = status.OpMode.value === '@AC_MAIN_OPERATION_MODE_COOL_W';
-                this.state.isHeating = !!this.isCooling;
+                if (status) {
+                    if (status.Operation) {
+                        this.state.isOn = status.Operation.value === '@AC_MAIN_OPERATION_RIGHT_ON_W';
+                    }
+                    if (status.OpMode) {
+                        this.state.isCooling = status.OpMode.value === '@AC_MAIN_OPERATION_MODE_COOL_W';
+                        this.state.isHeating = !!this.isCooling;
+                    }
+                    if (status.TempCur) {
+                        this.state.currentTemp = status.TempCur.value;
+                    }
+                    if (status.TempCfg) {
+                        this.state.targetTemp = status.TempCfg.value;
+                    }
 
-                this.state.currentTemp = status.TempCur.value;
-                this.state.targetTemp = status.TempCfg.value;
+                    //this.log(this.state);
 
-                //this.log(this.state);
-
-                this.service.getCharacteristic(Characteristic.Active).updateValue(this.state.isOn ? Characteristic.Active.ACTIVE : Characteristic.Active.INACTIVE);
-                this.service.getCharacteristic(Characteristic.CurrentTemperature).updateValue(this.state.currentTemp);
+                    this.getActive((unknown, value) => {
+                        this.service.getCharacteristic(Characteristic.Active).updateValue(value);
+                    });
+                    this.service.getCharacteristic(Characteristic.CurrentTemperature).updateValue(this.state.currentTemp);
+                    this.getCurrentHeaterCoolerState((unknown, value) => {
+                        this.service.getCharacteristic(Characteristic.CurrentHeaterCoolerState).updateValue(value);
+                    });
+                }
+            })
+            .catch((error) => {
+               this.log(error);
             });
     };
 
@@ -132,6 +149,8 @@ HomebridgeLgAirco.prototype = {
             .then((done) => {
                 //Done.
                 me.state.targetTemp = targetCoolingTemp;
+                this.state.isOn = true;
+                this.service.getCharacteristic(Characteristic.Active).updateValue(this.state.isOn ? Characteristic.Active.ACTIVE : Characteristic.Active.INACTIVE);
             })
             .catch((error) => {
                 //Error
@@ -170,7 +189,7 @@ HomebridgeLgAirco.prototype = {
             format: Characteristic.Formats.UINT8,
             maxValue: 2,
             minValue: 0,
-            validValues: [2],
+            validValues: [0],
             perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
         });
         targetHeaterCoolerStateCharac.on('get', me.getTargetHeaterCoolerState.bind(me));
