@@ -417,7 +417,7 @@ class Device(object):
         """
         self.client = client
         self.device = device
-        self.model: ModelInfo = client.model_info(device)
+        self.model = client.model_info(device)
 
     def _set_control(self, key, value):
         """Set a device's control for `key` to `value`."""
