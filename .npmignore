@@ -1,0 +1,10 @@
+.travis.yml
+.idea
+*.iml
+node_modules
+src/experimental
+
+resources/test-config
+resources/wideq/wideq/__pycache__/
+wideq_state.json
+test.js
