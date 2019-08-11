@@ -63,7 +63,7 @@ module.exports.Wideq = function (country, language) {
     
     me.paramConversion = {
         getSpeedAsNumber: (speed) => {
-            switch (speed) {
+            switch (speed.value) {
                 case '@AC_MAIN_WIND_STRENGTH_SLOW_W':
                     return 12.5;
                 case '@AC_MAIN_WIND_STRENGTH_SLOW_LOW_W':
@@ -80,6 +80,8 @@ module.exports.Wideq = function (country, language) {
                     return 87.5;
                 case '@AC_MAIN_WIND_STRENGTH_POWER_W':
                     return 100;
+                default:
+                    console.log('Unknown value: ' + JSON.stringify(speed, null, 4));
             }
         },
         isOn: (state) => {
