@@ -1,4 +1,5 @@
 const Wideq = require("./lg/wideq").Wideq;
+const Utils = require("./utils/utils").Utils;
 
 let Service, Characteristic;
 
@@ -24,6 +25,8 @@ function HomebridgeLgAirco(log, config) {
 
     this.deviceId = config['id'];
     this.wideq = new Wideq(config['country'], config['language']);
+    this.utils = new Utils();
+    this.debouncedRotationHandler = this.utils.debounce(this.setActualRotationSpeed, 5000);
 
     this.state = {
         isOn: false,
@@ -48,7 +51,10 @@ function HomebridgeLgAirco(log, config) {
                         this.state.isHeating = !!this.isCooling;
                     }
                     if (status.WindStrength) {
-                        this.state.speed = this.wideq.paramConversion.getSpeedAsNumber(status.WindStrength);
+                        const newValue = this.wideq.paramConversion.getSpeedAsNumber(status.WindStrength.value);
+                        if (newValue) {
+                            this.state.speed = newValue;
+                        }
                     }
                     if (status.TempCur) {
                         this.state.currentTemp = status.TempCur.value;
@@ -56,6 +62,8 @@ function HomebridgeLgAirco(log, config) {
                     if (status.TempCfg) {
                         this.state.targetTemp = status.TempCfg.value;
                     }
+
+                    console.log(this.state);
 
                     this.getActive((unknown, value) => {
                         this.service.getCharacteristic(Characteristic.Active).updateValue(value);
@@ -86,10 +94,13 @@ HomebridgeLgAirco.prototype = {
     setActive: function (shouldBeActive, callback) {
         const me = this;
 
-        const isOn = shouldBeActive === Characteristic.Active.ACTIVE;
-        me.wideq.turnOnOrOff(me.deviceId, isOn).then((done) => {
-            me.isOn = isOn;
-        });
+        if (shouldBeActive !== (me.state.isOn ? 1 : 0)) {
+            const isOn = shouldBeActive === Characteristic.Active.ACTIVE;
+            me.wideq.turnOnOrOff(me.deviceId, isOn)
+                .then((done) => {
+                    me.state.isOn = isOn;
+                });
+        }
 
         callback(null);
     },
@@ -132,7 +143,8 @@ HomebridgeLgAirco.prototype = {
         }
 
         me.wideq.turnOnOrOff(me.deviceId, turnOn).then((done) => {
-            me.isOn = turnOn;
+            me.state.isOn = turnOn;
+            me.state.isOn = turnOn;
         });
 
         callback(null);
@@ -163,20 +175,24 @@ HomebridgeLgAirco.prototype = {
         const me = this;
         callback(null, me.state.speed);
     },
-    setRotationSpeed: function (callback, targetRotationSpeed) {
+    setRotationSpeed: function (targetRotationSpeed, callback) {
+        const me = this;
+        me.debouncedRotationHandler(targetRotationSpeed);
+        callback(null);
+    },
+    setActualRotationSpeed: function (targetRotationSpeed) {
         const me = this;
 
+        console.log('Setting rotation speed: ' + targetRotationSpeed);
         me.wideq.setSpeed(me.deviceId, targetRotationSpeed)
             .then((done) => {
                 me.state.speed = targetRotationSpeed;
-                this.state.isOn = true;
-                this.service.getCharacteristic(Characteristic.RotationSpeed).updateValue(targetRotationSpeed);
+                me.state.isOn = true;
             })
             .catch((error) => {
                 //Error
+                console.log(error);
             });
-
-        callback(null);
     },
 
     getServices: function () {

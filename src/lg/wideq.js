@@ -50,7 +50,7 @@ module.exports.Wideq = function (country, language) {
 
     me.setSpeed = (deviceId, targetSpeed) => {
         if(targetSpeed < 37.5 || targetSpeed > 87.5) {
-            return Promise.reject('Fan speed should be between 12.5 and 100 %');
+            return Promise.reject('Fan speed should be between 37.5 and 87.5 %');
         } else {
             return python('set_speed', deviceId, targetSpeed)
                 .then(() => {
@@ -63,7 +63,7 @@ module.exports.Wideq = function (country, language) {
     
     me.paramConversion = {
         getSpeedAsNumber: (speed) => {
-            switch (speed.value) {
+            switch (speed) {
                 case '@AC_MAIN_WIND_STRENGTH_SLOW_W':
                     return 12.5;
                 case '@AC_MAIN_WIND_STRENGTH_SLOW_LOW_W':
