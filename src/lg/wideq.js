@@ -48,6 +48,48 @@ module.exports.Wideq = function (country, language) {
         }
     };
 
+    me.setSpeed = (deviceId, targetSpeed) => {
+        if(targetSpeed < 37.5 || targetSpeed > 87.5) {
+            return Promise.reject('Fan speed should be between 12.5 and 100 %');
+        } else {
+            return python('set_speed', deviceId, targetSpeed)
+                .then(() => {
+                    return Promise.resolve({result: 'success'});
+                }).catch((error) => {
+                    return Promise.reject({result: 'failure', reason: error});
+                });
+        }
+    };
+    
+    me.paramConversion = {
+        getSpeedAsNumber: (speed) => {
+            switch (speed) {
+                case '@AC_MAIN_WIND_STRENGTH_SLOW_W':
+                    return 12.5;
+                case '@AC_MAIN_WIND_STRENGTH_SLOW_LOW_W':
+                    return 25;
+                case '@AC_MAIN_WIND_STRENGTH_LOW_W':
+                    return 37.5;
+                case '@AC_MAIN_WIND_STRENGTH_LOW_MID_W':
+                    return 50;
+                case '@AC_MAIN_WIND_STRENGTH_MID_W':
+                    return 62.5;
+                case '@AC_MAIN_WIND_STRENGTH_MID_HIGH_W':
+                    return 75;
+                case '@AC_MAIN_WIND_STRENGTH_HIGH_W':
+                    return 87.5;
+                case '@AC_MAIN_WIND_STRENGTH_POWER_W':
+                    return 100;
+            }
+        },
+        isOn: (state) => {
+            return state === '@AC_MAIN_OPERATION_RIGHT_ON_W';
+        },
+        isCooling: (state) => {
+            return state === '@AC_MAIN_OPERATION_MODE_COOL_W';
+        }
+    };
+
     const parseLs = (data) => {
         const devices = data.split('\n');
 

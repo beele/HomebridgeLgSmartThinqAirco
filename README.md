@@ -26,7 +26,7 @@ After that an update of the state is performed every minute.
 
 ## Hardware Requirements
 
-- A SmartThinq compatible LG airco unit
+- A SmartThinq compatible LG airco unit (Tested with an )
 
 
 ## Setup guide

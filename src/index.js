@@ -29,6 +29,7 @@ function HomebridgeLgAirco(log, config) {
         isOn: false,
         isCooling: false,
         isHeating: false,
+        speed: 0,
 
         currentTemp: 0,
         targetTemp: 18
@@ -40,11 +41,14 @@ function HomebridgeLgAirco(log, config) {
             .then((status) => {
                 if (status) {
                     if (status.Operation) {
-                        this.state.isOn = status.Operation.value === '@AC_MAIN_OPERATION_RIGHT_ON_W';
+                        this.state.isOn = this.wideq.paramConversion.isOn(status.Operation.value);
                     }
                     if (status.OpMode) {
-                        this.state.isCooling = status.OpMode.value === '@AC_MAIN_OPERATION_MODE_COOL_W';
+                        this.state.isCooling = this.wideq.paramConversion.isCooling(status.OpMode.value);
                         this.state.isHeating = !!this.isCooling;
+                    }
+                    if (status.WindStrength) {
+                        this.state.speed = this.wideq.paramConversion.getSpeedAsNumber(status.WindStrength);
                     }
                     if (status.TempCur) {
                         this.state.currentTemp = status.TempCur.value;
@@ -53,8 +57,6 @@ function HomebridgeLgAirco(log, config) {
                         this.state.targetTemp = status.TempCfg.value;
                     }
 
-                    //this.log(this.state);
-
                     this.getActive((unknown, value) => {
                         this.service.getCharacteristic(Characteristic.Active).updateValue(value);
                     });
@@ -62,10 +64,11 @@ function HomebridgeLgAirco(log, config) {
                     this.getCurrentHeaterCoolerState((unknown, value) => {
                         this.service.getCharacteristic(Characteristic.CurrentHeaterCoolerState).updateValue(value);
                     });
+                    this.service.getCharacteristic(Characteristic.RotationSpeed).updateValue(this.state.speed);
                 }
             })
             .catch((error) => {
-               this.log(error);
+                this.log(error);
             });
     };
 
@@ -85,7 +88,7 @@ HomebridgeLgAirco.prototype = {
 
         const isOn = shouldBeActive === Characteristic.Active.ACTIVE;
         me.wideq.turnOnOrOff(me.deviceId, isOn).then((done) => {
-           me.isOn = isOn;
+            me.isOn = isOn;
         });
 
         callback(null);
@@ -147,7 +150,6 @@ HomebridgeLgAirco.prototype = {
 
         me.wideq.setTemp(me.deviceId, targetCoolingTemp)
             .then((done) => {
-                //Done.
                 me.state.targetTemp = targetCoolingTemp;
                 this.state.isOn = true;
                 this.service.getCharacteristic(Characteristic.Active).updateValue(this.state.isOn ? Characteristic.Active.ACTIVE : Characteristic.Active.INACTIVE);
@@ -157,6 +159,25 @@ HomebridgeLgAirco.prototype = {
             });
         callback(null);
     },
+    getRotationSpeed: function (callback) {
+        const me = this;
+        callback(null, me.state.speed);
+    },
+    setRotationSpeed: function (callback, targetRotationSpeed) {
+        const me = this;
+
+        me.wideq.setSpeed(me.deviceId, targetRotationSpeed)
+            .then((done) => {
+                me.state.speed = targetRotationSpeed;
+                this.state.isOn = true;
+                this.service.getCharacteristic(Characteristic.RotationSpeed).updateValue(targetRotationSpeed);
+            })
+            .catch((error) => {
+                //Error
+            });
+
+        callback(null);
+    },
 
     getServices: function () {
         const me = this;
@@ -164,7 +185,7 @@ HomebridgeLgAirco.prototype = {
         const informationService = new Service.AccessoryInformation();
         informationService
             .setCharacteristic(Characteristic.Manufacturer, "LG")
-            .setCharacteristic(Characteristic.Model, "AIRCO")
+            .setCharacteristic(Characteristic.Model, "PC12SQ NSJ")
             .setCharacteristic(Characteristic.SerialNumber, "1234-5678");
 
 
@@ -211,6 +232,19 @@ HomebridgeLgAirco.prototype = {
         });
         coolingThresholdTemperatureCharac.on('get', me.getCoolingThresholdTemperature.bind(me));
         coolingThresholdTemperatureCharac.on('set', me.setCoolingThresholdTemperature.bind(me));
+
+        const rotationSpeedCharac = me.service.getCharacteristic(Characteristic.RotationSpeed);
+        // Default: 0 - 100 (per 1 increment)
+        rotationSpeedCharac.setProps({
+            format: Characteristic.Formats.FLOAT,
+            unit: Characteristic.Units.PERCENTAGE,
+            maxValue: 87.5,
+            minValue: 37.5,
+            minStep: 12.5,
+            perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+        });
+        rotationSpeedCharac.on('get', me.getRotationSpeed.bind(me));
+        rotationSpeedCharac.on('set', me.setRotationSpeed.bind(me));
 
         return [informationService, me.service];
     }

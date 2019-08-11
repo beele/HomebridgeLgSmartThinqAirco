@@ -47,6 +47,7 @@ def mon(client, device_id):
                     else:
                         for key, value in res.items():
                             try:
+                                desc = None
                                 desc = model.value(key)
                             except KeyError:
                                 print('- {}: {}'.format(key, value))
@@ -139,6 +140,19 @@ def ac_config(client, device_id):
     print(ac.get_light())
     print(ac.get_zones())
 
+def set_speed(client, device_id, speed):
+    ac = wideq.ACDevice(client, _force_device(client, device_id))
+    speed_mapping = {
+        '12.5': wideq.ACFanSpeed.SLOW, #Not supported
+        '25': wideq.ACFanSpeed.SLOW_LOW, #Not supported
+        '37.5': wideq.ACFanSpeed.LOW,
+        '50': wideq.ACFanSpeed.LOW_MID,
+        '62.5': wideq.ACFanSpeed.MID,
+        '75': wideq.ACFanSpeed.MID_HIGH,
+        '87.5': wideq.ACFanSpeed.HIGH,
+        '100': wideq.ACFanSpeed.POWER #Not supported
+    }
+    ac.set_fan_speed(speed_mapping[speed])
 
 EXAMPLE_COMMANDS = {
     'ls': ls,
@@ -147,6 +161,7 @@ EXAMPLE_COMMANDS = {
     'set-temp': set_temp,
     'turn': turn,
     'ac-config': ac_config,
+    'set_speed': set_speed,
 }
 
 
