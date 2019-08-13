@@ -28,6 +28,9 @@ function HomebridgeLgAirco(log, config) {
     this.utils = new Utils();
     this.debouncedRotationHandler = this.utils.debounce(this.setActualRotationSpeed, 5000);
 
+    this.intervalWhenOn = null;
+    this.intervalWhenOff = null;
+
     this.state = {
         isOn: false,
         isCooling: false,
@@ -44,7 +47,11 @@ function HomebridgeLgAirco(log, config) {
             .then((status) => {
                 if (status) {
                     if (status.Operation) {
-                        this.state.isOn = this.wideq.paramConversion.isOn(status.Operation.value);
+                        const newValue = this.wideq.paramConversion.isOn(status.Operation.value);
+                        this.state.isOn = newValue;
+                        if (newValue !== this.state.isOn) {
+                            this.setCorrectInterval();
+                        }
                     }
                     if (status.OpMode) {
                         this.state.isCooling = this.wideq.paramConversion.isCooling(status.OpMode.value);
@@ -63,7 +70,7 @@ function HomebridgeLgAirco(log, config) {
                         this.state.targetTemp = status.TempCfg.value;
                     }
 
-                    console.log(this.state);
+                    //console.log(this.state);
 
                     this.getActive((unknown, value) => {
                         this.service.getCharacteristic(Characteristic.Active).updateValue(value);
@@ -80,9 +87,24 @@ function HomebridgeLgAirco(log, config) {
             });
     };
 
-    setInterval(() => {
-        this.updateState();
-    }, 60 * 1000);
+    this.setCorrectInterval = () => {
+        clearInterval(this.intervalWhenOff);
+        clearInterval(this.intervalWhenOn);
+
+        if (this.state.isOn) {
+            console.log('Setting fast ac status interval');
+            this.intervalWhenOn = setInterval(() => {
+                this.updateState()
+            }, 60 * 1000);
+        } else {
+            console.log('Setting slow ac status interval');
+            this.intervalWhenOff = setInterval(() => {
+                this.updateState();
+            }, 10 * 60 * 1000);
+        }
+    };
+
+    this.setCorrectInterval();
     this.updateState();
 }
 
@@ -94,11 +116,13 @@ HomebridgeLgAirco.prototype = {
     setActive: function (shouldBeActive, callback) {
         const me = this;
 
-        if (shouldBeActive !== (me.state.isOn ? 1 : 0)) {
-            const isOn = shouldBeActive === Characteristic.Active.ACTIVE;
-            me.wideq.turnOnOrOff(me.deviceId, isOn)
+        const turnOnOrOff = shouldBeActive === Characteristic.Active.ACTIVE;
+        if (me.state.isOn !== turnOnOrOff) {
+            console.log('Turning ac ' + (turnOnOrOff ? 'on' : 'off') + '!');
+            me.wideq.turnOnOrOff(me.deviceId, turnOnOrOff)
                 .then((done) => {
-                    me.state.isOn = isOn;
+                    me.state.isOn = turnOnOrOff;
+                    me.setCorrectInterval();
                 });
         }
 
@@ -137,15 +161,19 @@ HomebridgeLgAirco.prototype = {
     setTargetHeaterCoolerState: function (targetState, callback) {
         const me = this;
 
-        let turnOn = false;
+        let turnOnOrOff = false;
         if (targetState !== Characteristic.TargetHeaterCoolerState.AUTO) {
-            turnOn = true;
+            turnOnOrOff = true;
         }
 
-        me.wideq.turnOnOrOff(me.deviceId, turnOn).then((done) => {
-            me.state.isOn = turnOn;
-            me.state.isOn = turnOn;
-        });
+        if(me.state.isOn !== turnOnOrOff) {
+            console.log('Turning ac ' + (turnOnOrOff ? 'on' : 'off') + '!');
+            me.wideq.turnOnOrOff(me.deviceId, turnOnOrOff)
+                .then((done) => {
+                    me.state.isOn = turnOnOrOff;
+                    me.setCorrectInterval();
+                });
+        }
 
         callback(null);
     },
