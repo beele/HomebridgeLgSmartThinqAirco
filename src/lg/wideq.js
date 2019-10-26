@@ -20,9 +20,12 @@ module.exports.Wideq = function (country, language) {
     };
 
     me.status = (deviceId) => {
-        return python('mon', deviceId)
+        return python('ac-mon', deviceId)
             .then((result) => {
                 return Promise.resolve(parseMon(result));
+            })
+            .catch((error) => {
+                return Promise.reject(error);
             });
     };
 
@@ -64,31 +67,31 @@ module.exports.Wideq = function (country, language) {
     me.paramConversion = {
         getSpeedAsNumber: (speed) => {
             switch (speed) {
-                case '@AC_MAIN_WIND_STRENGTH_SLOW_W':
+                case 'SLOW':
                     return 12.5;
-                case '@AC_MAIN_WIND_STRENGTH_SLOW_LOW_W':
+                case 'SLOW_LOW':
                     return 25;
-                case '@AC_MAIN_WIND_STRENGTH_LOW_W':
+                case 'LOW':
                     return 37.5;
-                case '@AC_MAIN_WIND_STRENGTH_LOW_MID_W':
+                case 'LOW_MID':
                     return 50;
-                case '@AC_MAIN_WIND_STRENGTH_MID_W':
+                case 'MID':
                     return 62.5;
-                case '@AC_MAIN_WIND_STRENGTH_MID_HIGH_W':
+                case 'MID_HIGH':
                     return 75;
-                case '@AC_MAIN_WIND_STRENGTH_HIGH_W':
+                case 'HIGH':
                     return 87.5;
-                case '@AC_MAIN_WIND_STRENGTH_POWER_W':
+                case 'POWER':
                     return 100;
                 default:
                     console.log('Unknown value: ' + JSON.stringify(speed, null, 4));
             }
         },
         isOn: (state) => {
-            return state === '@AC_MAIN_OPERATION_RIGHT_ON_W';
+            return state === 'on';
         },
         isCooling: (state) => {
-            return state === '@AC_MAIN_OPERATION_MODE_COOL_W';
+            return state === 'COOL';
         }
     };
 
@@ -112,24 +115,14 @@ module.exports.Wideq = function (country, language) {
     };
 
     const parseMon = (data) => {
-        const monitorLines = data.split('- ');
-
-        const processedMonitorData = {};
-        if (monitorLines.length > 1) {
-            monitorLines.shift();
-            for (const monitorLine of monitorLines) {
-                const labelAndValues = monitorLine.split(':');
-                if (labelAndValues.length > 1) {
-                    const valueAndRange = labelAndValues[1].split('(');
-                    if(valueAndRange.length > 1) {
-                        processedMonitorData[labelAndValues[0]] = {value: valueAndRange[0].trim(), range: valueAndRange[1].replace(')', '').replace('\n', '').trim()};
-                    } else {
-                        processedMonitorData[labelAndValues[0]] = {value: valueAndRange[0].replace('\n', '').trim(), range: null};
-                    }
-                }
-            }
-        }
-        return processedMonitorData;
+        const monitorLines = data.split('; ');
+        return {
+            onOff: monitorLines[0],
+            mode: monitorLines[1],
+            currentTemp: monitorLines[2].substring(4).replace('°C', ''),
+            targetTemp: monitorLines[3].substring(4).replace('°C', ''),
+            speed: monitorLines[4].substring(10).replace('\n', '')
+        };
     };
 
     const python = (...args) => {
@@ -144,9 +137,9 @@ module.exports.Wideq = function (country, language) {
             pythonArgs.push(arg);
         }
 
-        const pythonProcess = spawn('python3', pythonArgs);
-
         return new Promise((resolve, reject) => {
+            const pythonProcess = spawn('python3', pythonArgs);
+
             pythonProcess.stdout.on('data', (data) => {
                 //console.log(data.toString());
                 pythonProcess.kill('SIGTERM');
@@ -162,7 +155,6 @@ module.exports.Wideq = function (country, language) {
             });
             pythonProcess.stderr.on('data', (data) => {
                 console.error(data.toString());
-
                 reject(data.toString());
             });
         });

@@ -44,6 +44,7 @@ def mon(client, device_id):
                         res = model.decode_monitor(data)
                     except ValueError:
                         print('status data: {!r}'.format(data))
+                        sys.stdout.flush()
                     else:
                         for key, value in res.items():
                             try:
@@ -59,6 +60,7 @@ def mon(client, device_id):
                                 print('- {0}: {1} ({2.min}-{2.max})'.format(
                                     key, value, desc,
                                 ))
+                    sys.stdout.flush()
 
         except KeyboardInterrupt:
             pass
@@ -85,14 +87,15 @@ def ac_mon(client, device_id):
                 print(
                     '{1}; '
                     '{0.mode.name}; '
-                    'cur {0.temp_cur_f}°F; '
-                    'cfg {0.temp_cfg_f}°F; '
+                    'cur {0.temp_cur_c}°C; '
+                    'cfg {0.temp_cfg_c}°C; '
                     'fan speed {0.fan_speed.name}'
                     .format(
                         state,
                         'on' if state.is_on else 'off'
                     )
                 )
+                sys.stdout.flush()
 
     except KeyboardInterrupt:
         pass

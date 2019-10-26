@@ -46,28 +46,28 @@ function HomebridgeLgAirco(log, config) {
             .status(this.deviceId)
             .then((status) => {
                 if (status) {
-                    if (status.Operation) {
-                        const newValue = this.wideq.paramConversion.isOn(status.Operation.value);
+                    if (status.onOff) {
+                        const newValue = this.wideq.paramConversion.isOn(status.onOff);
                         this.state.isOn = newValue;
                         if (newValue !== this.state.isOn) {
                             this.setCorrectInterval();
                         }
                     }
-                    if (status.OpMode) {
-                        this.state.isCooling = this.wideq.paramConversion.isCooling(status.OpMode.value);
+                    if (status.mode) {
+                        this.state.isCooling = this.wideq.paramConversion.isCooling(status.mode);
                         this.state.isHeating = !!this.isCooling;
                     }
-                    if (status.WindStrength) {
-                        const newValue = this.wideq.paramConversion.getSpeedAsNumber(status.WindStrength.value);
+                    if (status.speed) {
+                        const newValue = this.wideq.paramConversion.getSpeedAsNumber(status.speed);
                         if (newValue) {
                             this.state.speed = newValue;
                         }
                     }
-                    if (status.TempCur) {
-                        this.state.currentTemp = status.TempCur.value;
+                    if (status.currentTemp) {
+                        this.state.currentTemp = status.currentTemp;
                     }
-                    if (status.TempCfg) {
-                        this.state.targetTemp = status.TempCfg.value;
+                    if (status.targetTemp) {
+                        this.state.targetTemp = status.targetTemp;
                     }
 
                     //console.log(this.state);
