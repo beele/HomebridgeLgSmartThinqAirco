@@ -22,7 +22,7 @@ The `country` field is the 2 letter country code (XX) of the chosen country of y
 The `language` field is the 4 letter language code (xx-XX) of the chosen language of your LG SmartThinq account.
 
 The initial state will be fetched shortly after booting your homebridge instance. 
-After that an update of the state is performed every minute.
+After that an update of the state is performed every minute if the AC is on and every 10 minutes if the AC if off.
 
 ## Hardware Requirements
 
@@ -34,7 +34,8 @@ After that an update of the state is performed every minute.
 - After installing the plugin with the command found in the beginning of the readme, with a terminal navigate to the folder where it is installed.
 - On a Raspberry Pi this will most likely be located at `/usr/lib/node_modules/homebridge-lg-airco`.
 - Once in this folder navigate further down to `resources/wideq`.
-- Execute the command `python3 example.py -c "country-code" -l "language-code" -s "wideq_state.json" ls` where you should replace `country-code` and `language-code` with the respective values.
+- Execute the command: `python3 -m pip install requests`
+- Execute the command: `python3 example.py -c "country-code" -l "language-code" -s "wideq_state.json" ls` where you should replace `country-code` and `language-code` with the respective values.
   For example: `python3 example.py -c "BE" -l "en-UK" -s "wideq_state.json" ls`
 - Follow the instructions on the screen, and paste the resulting URL back into the terminal.
   The command will now print out a list of all known devices for your account, select the one you want and paste the value in the `config.json` file at the `id` field of the corresponding accessory definition.
