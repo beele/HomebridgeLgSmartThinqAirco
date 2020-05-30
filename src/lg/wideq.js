@@ -30,6 +30,16 @@ function Wideq(country, language) {
             });
     };
 
+    me.config = (deviceId) => {
+        return python(['ac-config', deviceId])
+            .then((result) => {
+                return Promise.resolve(result);
+            })
+            .catch((error) => {
+                return Promise.reject(error);
+            })
+    };
+
     me.turnOnOrOff = (deviceId, turnOn) => {
         return python(['turn', deviceId, turnOn ? 'on' : 'off'])
             .then(() => {
@@ -139,6 +149,8 @@ function Wideq(country, language) {
         }
 
         return new Promise((resolve, reject) => {
+            let data = [];
+
             console.log('python3 -u example.py ' + pythonArgs.join(' '));
             const process = exec('python3 -u example.py ' + pythonArgs.join(' '), {cwd: this.wideqPath}, (error) => {
                 if (error) {
@@ -147,10 +159,9 @@ function Wideq(country, language) {
                 }
             });
 
-            let data = null;
             process.stdout.on('data', (output) => {
                 console.log(output.toString());
-                data = output.toString();
+                data.push(output.toString());
                 if (forceClose) {
                     process.kill("SIGINT");
                 }
@@ -163,7 +174,7 @@ function Wideq(country, language) {
 
             process.on('close', (exitCode) => {
                 if (exitCode === 0) {
-                    resolve(data);
+                    resolve(data.join('\n'));
                 } else {
                     reject('python error!')
                 }
@@ -178,6 +189,11 @@ setTimeout(async () => {
     let results = await wideq.ls();
     console.log(results);
 
-    results = await wideq.status(results[0].deviceId);
+    const deviceId = results[0].deviceId;
+
+    results = await wideq.config(deviceId);
+    console.log(results);
+
+    results = await wideq.status(deviceId);
     console.log(results);
 });

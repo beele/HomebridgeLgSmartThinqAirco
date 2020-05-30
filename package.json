@@ -4,7 +4,9 @@
   "description": "Homebridge plugin to control a Smart Thinq enabled LG airco unit. Makes use of WideQ => https://github.com/sampsyo/wideq",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "node --max-old-space-size=1024 ./node_modules/typescript/lib/tsc.js",
+    "homebridge": "tsc && homebridge -P . -U ./resources/test-config/",
+    "test": "jest --config jest.config.js --collect-coverage"
   },
   "keywords": [
     "homebridge-plugin",
@@ -16,10 +18,18 @@
     "smartthinq"
   ],
   "engines": {
-    "node": ">=9.8.0",
-    "homebridge": ">=0.4.45"
+    "node": ">=10.17.0",
+    "homebridge": ">=1.0.0"
   },
   "author": "Kevin Van den Abeele",
   "license": "GNU GPLv3",
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^3.8.3",
+    "homebridge": "^1.0.4",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.3.0",
+    "@types/jest": "^25.2.1",
+    "@types/node": "^13.13.5"
+  }
 }
