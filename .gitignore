@@ -7,3 +7,4 @@ resources/test-config
 resources/wideq/wideq/__pycache__/
 wideq_state.json
 test.js
+.DS_STORE

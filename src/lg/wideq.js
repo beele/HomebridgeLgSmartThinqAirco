@@ -40,7 +40,7 @@ function Wideq(country, language) {
     };
 
     me.setTemp = (deviceId, targetTemp) => {
-        if(targetTemp < 18 || targetTemp > 26) {
+        if (targetTemp < 18 || targetTemp > 26) {
             return Promise.reject('Temperature should be between 18 and 26 °C');
         } else {
             return python(['set-temp', deviceId, targetTemp])
@@ -53,7 +53,7 @@ function Wideq(country, language) {
     };
 
     me.setSpeed = (deviceId, targetSpeed) => {
-        if(targetSpeed < 37.5 || targetSpeed > 87.5) {
+        if (targetSpeed < 37.5 || targetSpeed > 87.5) {
             return Promise.reject('Fan speed should be between 37.5 and 87.5 %');
         } else {
             return python(['set_speed', deviceId, targetSpeed])
@@ -116,24 +116,23 @@ function Wideq(country, language) {
     };
 
     const parseMon = (data) => {
-        const monitorLines = data.split('; ');
+        const dataPieces = data.split(';').map(s => s.trim());
+        console.log(dataPieces);
         return {
-            onOff: monitorLines[0],
-            mode: monitorLines[1],
-            currentTemp: monitorLines[2].substring(4).replace('°C', ''),
-            targetTemp: monitorLines[3].substring(4).replace('°C', ''),
-            speed: monitorLines[4].substring(10).replace('\n', '')
+            onOff: dataPieces[0],
+            mode: dataPieces[1],
+            currentTemp: dataPieces[2].substring(4),
+            targetTemp: dataPieces[3].substring(4),
+            speed: dataPieces[4].substring(10)
         };
     };
 
     const python = (args, forceClose = false) => {
-
-        const pythonArgs = [];
-        pythonArgs.push(
+        const pythonArgs = [
             '-c ' + this.country,
             '-l ' + this.language,
             '-v'
-        );
+        ];
 
         for (const arg of args) {
             pythonArgs.push(arg);
@@ -143,8 +142,8 @@ function Wideq(country, language) {
             console.log('python3 -u example.py ' + pythonArgs.join(' '));
             const process = exec('python3 -u example.py ' + pythonArgs.join(' '), {cwd: this.wideqPath}, (error) => {
                 if (error) {
-                    //TODO: Process could not be started
                     console.error(error);
+                    reject(error);
                 }
             });
 
@@ -159,10 +158,11 @@ function Wideq(country, language) {
 
             process.stderr.on('data', (output) => {
                 console.error(output.toString());
+                //This is not always an error, could just be debug info!
             });
 
             process.on('close', (exitCode) => {
-                if(exitCode === 0) {
+                if (exitCode === 0) {
                     resolve(data);
                 } else {
                     reject('python error!')
