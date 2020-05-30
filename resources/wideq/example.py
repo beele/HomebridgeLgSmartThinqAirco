@@ -1,8 +1,17 @@
+#!/usr/bin/env python3
+
 import wideq
 import json
 import time
 import argparse
 import sys
+import re
+import os.path
+import logging
+from typing import List
+
+STATE_FILE = 'wideq_state.json'
+LOGGER = logging.getLogger("wideq.example")
 
 
 def authenticate(gateway):
@@ -44,11 +53,9 @@ def mon(client, device_id):
                         res = model.decode_monitor(data)
                     except ValueError:
                         print('status data: {!r}'.format(data))
-                        sys.stdout.flush()
                     else:
                         for key, value in res.items():
                             try:
-                                desc = None
                                 desc = model.value(key)
                             except KeyError:
                                 print('- {}: {}'.format(key, value))
@@ -60,7 +67,6 @@ def mon(client, device_id):
                                 print('- {0}: {1} ({2.min}-{2.max})'.format(
                                     key, value, desc,
                                 ))
-                    sys.stdout.flush()
 
         except KeyboardInterrupt:
             pass
@@ -80,6 +86,11 @@ def ac_mon(client, device_id):
 
     try:
         ac.monitor_start()
+    except wideq.core.NotConnectedError:
+        print('Device not available.')
+        return
+
+    try:
         while True:
             time.sleep(1)
             state = ac.poll()
@@ -87,15 +98,14 @@ def ac_mon(client, device_id):
                 print(
                     '{1}; '
                     '{0.mode.name}; '
-                    'cur {0.temp_cur_c}°C; '
-                    'cfg {0.temp_cfg_c}°C; '
+                    'cur {0.temp_cur_f}°F; '
+                    'cfg {0.temp_cfg_f}°F; '
                     'fan speed {0.fan_speed.name}'
                     .format(
                         state,
                         'on' if state.is_on else 'off'
                     )
                 )
-                sys.stdout.flush()
 
     except KeyboardInterrupt:
         pass
@@ -124,7 +134,7 @@ def set_temp(client, device_id, temp):
     """Set the configured temperature for an AC device."""
 
     ac = wideq.ACDevice(client, _force_device(client, device_id))
-    ac.set_celsius(int(temp))
+    ac.set_fahrenheit(int(temp))
 
 
 def turn(client, device_id, on_off):
@@ -136,26 +146,17 @@ def turn(client, device_id, on_off):
 
 def ac_config(client, device_id):
     ac = wideq.ACDevice(client, _force_device(client, device_id))
+    print(ac.supported_operations)
+    print(ac.supported_on_operation)
     print(ac.get_filter_state())
     print(ac.get_mfilter_state())
     print(ac.get_energy_target())
+    print(ac.get_power(), " watts")
+    print(ac.get_outdoor_power(), " watts")
     print(ac.get_volume())
     print(ac.get_light())
     print(ac.get_zones())
 
-def set_speed(client, device_id, speed):
-    ac = wideq.ACDevice(client, _force_device(client, device_id))
-    speed_mapping = {
-        '12.5': wideq.ACFanSpeed.SLOW, #Not supported
-        '25': wideq.ACFanSpeed.SLOW_LOW, #Not supported
-        '37.5': wideq.ACFanSpeed.LOW,
-        '50': wideq.ACFanSpeed.LOW_MID,
-        '62.5': wideq.ACFanSpeed.MID,
-        '75': wideq.ACFanSpeed.MID_HIGH,
-        '87.5': wideq.ACFanSpeed.HIGH,
-        '100': wideq.ACFanSpeed.POWER #Not supported
-    }
-    ac.set_fan_speed(speed_mapping[speed])
 
 EXAMPLE_COMMANDS = {
     'ls': ls,
@@ -164,24 +165,32 @@ EXAMPLE_COMMANDS = {
     'set-temp': set_temp,
     'turn': turn,
     'ac-config': ac_config,
-    'set_speed': set_speed,
 }
 
 
 def example_command(client, cmd, args):
-    func = EXAMPLE_COMMANDS[cmd]
+    func = EXAMPLE_COMMANDS.get(cmd)
+    if not func:
+        LOGGER.error("Invalid command: '%s'.\n"
+                     "Use one of: %s", cmd, ', '.join(EXAMPLE_COMMANDS))
+        return
     func(client, *args)
 
 
-def example(country, language, state_file, cmd, args):
-    # Load the current state for the example.
+def example(country: str, language: str, verbose: bool,
+            cmd: str, args: List[str]) -> None:
+    if verbose:
+        wideq.set_log_level(logging.DEBUG)
 
+    # Load the current state for the example.
     try:
-        with open(state_file) as f:
+        with open(STATE_FILE) as f:
+            LOGGER.debug("State file found '%s'", os.path.abspath(STATE_FILE))
             state = json.load(f)
-    except IOError as e:
-        print(e)
+    except IOError:
         state = {}
+        LOGGER.debug("No state file found (tried: '%s')",
+                     os.path.abspath(STATE_FILE))
 
     client = wideq.Client.load(state)
     if country:
@@ -200,48 +209,62 @@ def example(country, language, state_file, cmd, args):
             break
 
         except wideq.NotLoggedInError:
-            print('Session expired.')
+            LOGGER.info('Session expired.')
             client.refresh()
 
         except UserError as exc:
-            print(exc.msg, file=sys.stderr)
+            LOGGER.error(exc.msg)
             sys.exit(1)
 
     # Save the updated state.
     state = client.dump()
-    with open(state_file, 'w') as f:
+    with open(STATE_FILE, 'w') as f:
         json.dump(state, f)
+        LOGGER.debug("Wrote state file '%s'", os.path.abspath(STATE_FILE))
 
 
-def main():
+def main() -> None:
     """The main command-line entry point.
     """
     parser = argparse.ArgumentParser(
         description='Interact with the LG SmartThinQ API.'
     )
     parser.add_argument('cmd', metavar='CMD', nargs='?', default='ls',
-                        help='one of {}'.format(', '.join(EXAMPLE_COMMANDS)))
+                        help=f'one of: {", ".join(EXAMPLE_COMMANDS)}')
     parser.add_argument('args', metavar='ARGS', nargs='*',
                         help='subcommand arguments')
 
     parser.add_argument(
         '--country', '-c',
-        help='country code for account (default: {})'
-        .format(wideq.DEFAULT_COUNTRY)
+        help=f'country code for account (default: {wideq.DEFAULT_COUNTRY})',
+        default=wideq.DEFAULT_COUNTRY
     )
     parser.add_argument(
         '--language', '-l',
-        help='language code for the API (default: {})'
-        .format(wideq.DEFAULT_LANGUAGE)
+        help=f'language code for the API (default: {wideq.DEFAULT_LANGUAGE})',
+        default=wideq.DEFAULT_LANGUAGE
     )
     parser.add_argument(
-        '--state-file', '-s',
-        help='Absolute path to the state file (default: wideq_state.json)'
-        .format('wideq_state.json')
+        '--verbose', '-v',
+        help='verbose mode to help debugging',
+        action='store_true', default=False
     )
 
     args = parser.parse_args()
-    example(args.country, args.language, args.state_file, args.cmd, args.args)
+    country_regex = re.compile(r"^[A-Z]{2,3}$")
+    if not country_regex.match(args.country):
+        LOGGER.error("Country must be two or three letters"
+                     " all upper case (e.g. US, NO, KR) got: '%s'",
+                     args.country)
+        exit(1)
+    language_regex = re.compile(r"^[a-z]{2,3}-[A-Z]{2,3}$")
+    if not language_regex.match(args.language):
+        LOGGER.error("Language must be a combination of language"
+                     " and country (e.g. en-US, no-NO, kr-KR)"
+                     " got: '%s'",
+                     args.language)
+        exit(1)
+    example(args.country, args.language, args.verbose, args.cmd, args.args)
 
 
 if __name__ == '__main__':
