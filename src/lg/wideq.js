@@ -1,9 +1,10 @@
-const {spawn} = require('child_process');
+const exec = require('child_process').exec;
 const {resolve} = require('path');
 
-module.exports.Wideq = function (country, language) {
+function Wideq(country, language) {
     const me = this;
 
+    me.wideqPath = resolve(__dirname + '../../../resources/wideq/');
     me.scriptPath = resolve(__dirname + '../../../resources/wideq/example.py');
     me.statePath = resolve(__dirname + '../../../resources/wideq/wideq_state.json');
     console.log('Path to script file: ' + me.scriptPath);
@@ -13,14 +14,14 @@ module.exports.Wideq = function (country, language) {
     me.language = language;
 
     me.ls = () => {
-        return python('ls')
+        return python(['ls'])
             .then((result) => {
                 return Promise.resolve(parseLs(result));
             });
     };
 
     me.status = (deviceId) => {
-        return python('ac-mon', deviceId)
+        return python(['ac-mon', deviceId], true)
             .then((result) => {
                 return Promise.resolve(parseMon(result));
             })
@@ -30,7 +31,7 @@ module.exports.Wideq = function (country, language) {
     };
 
     me.turnOnOrOff = (deviceId, turnOn) => {
-        return python('turn', deviceId, turnOn ? 'on' : 'off')
+        return python(['turn', deviceId, turnOn ? 'on' : 'off'])
             .then(() => {
                 return Promise.resolve({result: 'success'});
             }).catch((error) => {
@@ -42,7 +43,7 @@ module.exports.Wideq = function (country, language) {
         if(targetTemp < 18 || targetTemp > 26) {
             return Promise.reject('Temperature should be between 18 and 26 °C');
         } else {
-            return python('set-temp', deviceId, targetTemp)
+            return python(['set-temp', deviceId, targetTemp])
                 .then(() => {
                     return Promise.resolve({result: 'success'});
                 }).catch((error) => {
@@ -55,7 +56,7 @@ module.exports.Wideq = function (country, language) {
         if(targetSpeed < 37.5 || targetSpeed > 87.5) {
             return Promise.reject('Fan speed should be between 37.5 and 87.5 %');
         } else {
-            return python('set_speed', deviceId, targetSpeed)
+            return python(['set_speed', deviceId, targetSpeed])
                 .then(() => {
                     return Promise.resolve({result: 'success'});
                 }).catch((error) => {
@@ -63,7 +64,7 @@ module.exports.Wideq = function (country, language) {
                 });
         }
     };
-    
+
     me.paramConversion = {
         getSpeedAsNumber: (speed) => {
             switch (speed) {
@@ -125,38 +126,58 @@ module.exports.Wideq = function (country, language) {
         };
     };
 
-    const python = (...args) => {
-        const pythonArgs = [resolve(
-            this.scriptPath),
+    const python = (args, forceClose = false) => {
+
+        const pythonArgs = [];
+        pythonArgs.push(
             '-c ' + this.country,
             '-l ' + this.language,
-            '-s' + this.statePath
-        ];
+            '-v'
+        );
 
         for (const arg of args) {
             pythonArgs.push(arg);
         }
 
         return new Promise((resolve, reject) => {
-            const pythonProcess = spawn('python3', pythonArgs);
-
-            pythonProcess.stdout.on('data', (data) => {
-                //console.log(data.toString());
-                pythonProcess.kill('SIGTERM');
-
-                resolve(data.toString());
-            });
-            pythonProcess.on('close', (code) => {
-                if(code === 0) {
-                    resolve('Succeeded');
-                } else {
-                    reject('Failed');
+            console.log('python3 -u example.py ' + pythonArgs.join(' '));
+            const process = exec('python3 -u example.py ' + pythonArgs.join(' '), {cwd: this.wideqPath}, (error) => {
+                if (error) {
+                    //TODO: Process could not be started
+                    console.error(error);
                 }
             });
-            pythonProcess.stderr.on('data', (data) => {
-                console.error(data.toString());
-                reject(data.toString());
+
+            let data = null;
+            process.stdout.on('data', (output) => {
+                console.log(output.toString());
+                data = output.toString();
+                if (forceClose) {
+                    process.kill("SIGINT");
+                }
+            });
+
+            process.stderr.on('data', (output) => {
+                console.error(output.toString());
+            });
+
+            process.on('close', (exitCode) => {
+                if(exitCode === 0) {
+                    resolve(data);
+                } else {
+                    reject('python error!')
+                }
             });
         });
     }
-};
+}
+
+const wideq = new Wideq('BE', 'en-UK');
+
+setTimeout(async () => {
+    let results = await wideq.ls();
+    console.log(results);
+
+    results = await wideq.status(results[0].deviceId);
+    console.log(results);
+});
