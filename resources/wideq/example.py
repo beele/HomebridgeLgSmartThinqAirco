@@ -134,7 +134,27 @@ def set_temp(client, device_id, temp):
     """Set the configured temperature for an AC device."""
 
     ac = wideq.ACDevice(client, _force_device(client, device_id))
-    ac.set_fahrenheit(int(temp))
+    ac.set_celsius(int(temp))
+
+
+def set_mode(client, device_id, mode):
+    ac = wideq.ACDevice(client, _force_device(client, device_id))
+    ac.set_mode(wideq.ACMode[mode])
+
+
+def set_fan_speed(client, device_id, speed):
+    ac = wideq.ACDevice(client, _force_device(client, device_id))
+    ac.set_fan_speed(wideq.ACFanSpeed[speed])
+
+
+def set_swing_mode_v(client, device_id, swing_mode_v):
+    ac = wideq.ACDevice(client, _force_device(client, device_id))
+    ac.set_vert_swing(wideq.ACVSwingMode[swing_mode_v])
+
+
+def set_swing_mode_h(client, device_id, swing_mode_h):
+    ac= wideq.ACDevice(client, _force_device(client, device_id))
+    ac.set_horz_swing(wideq.ACHSwingMode[swing_mode_h])
 
 
 def turn(client, device_id, on_off):
@@ -162,9 +182,13 @@ EXAMPLE_COMMANDS = {
     'ls': ls,
     'mon': mon,
     'ac-mon': ac_mon,
-    'set-temp': set_temp,
-    'turn': turn,
     'ac-config': ac_config,
+    'turn': turn,
+    'set-temp': set_temp,
+    'set-mode': set_mode,
+    'set-speed': set_fan_speed,
+    'set-swing-v': set_swing_mode_v,
+    'set-swing-h': set_swing_mode_h
 }
 
 

@@ -2,10 +2,10 @@ const exec = require('child_process').exec;
 
 export class PythonUtils {
 
-    private readonly workingdDir: string;
+    private readonly workingDir: string;
 
     constructor(workingDir: string) {
-        this.workingdDir = workingDir;
+        this.workingDir = workingDir;
     }
 
     public async executePython3(scriptName: string, args: string[], forceCloseProcessAfterOutput: boolean = false): Promise<string> {
@@ -18,7 +18,7 @@ export class PythonUtils {
             let data: string[] = [];
 
             console.log('python3 -u example.py ' + pythonArgs.join(' '));
-            const process = exec('python3 -u example.py ' + pythonArgs.join(' '), {cwd: this.workingdDir}, (error: any) => {
+            const process = exec('python3 -u example.py ' + pythonArgs.join(' '), {cwd: this.workingDir}, (error: any) => {
                 if (error) {
                     console.error(error);
                     reject(error);
