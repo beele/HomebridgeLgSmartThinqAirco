@@ -153,8 +153,13 @@ def set_swing_mode_v(client, device_id, swing_mode_v):
 
 
 def set_swing_mode_h(client, device_id, swing_mode_h):
-    ac= wideq.ACDevice(client, _force_device(client, device_id))
+    ac = wideq.ACDevice(client, _force_device(client, device_id))
     ac.set_horz_swing(wideq.ACHSwingMode[swing_mode_h])
+
+
+def get_power_draw(client, device_id):
+    ac = wideq.ACDevice(client, _force_device(client, device_id))
+    print(ac.get_power())
 
 
 def turn(client, device_id, on_off):
@@ -188,7 +193,8 @@ EXAMPLE_COMMANDS = {
     'set-mode': set_mode,
     'set-speed': set_fan_speed,
     'set-swing-v': set_swing_mode_v,
-    'set-swing-h': set_swing_mode_h
+    'set-swing-h': set_swing_mode_h,
+    'get-power-draw': get_power_draw
 }
 
 

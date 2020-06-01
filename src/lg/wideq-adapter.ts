@@ -45,16 +45,57 @@ export class WideqAdapter {
         return processedDevices;
     }
 
-    public async getStatus(): Promise<AirCoolerStatus> {
-        return null;
+    public async getStatus(deviceId: string): Promise<AirCoolerStatus> {
+        try {
+            const data: string = await this.pythonUtils.executePython3(this.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'ac-mon ' + deviceId], true);
+            console.log(data);
+
+            const dataPieces: string[] = data.split(';').map(s => s.trim());
+            console.log(dataPieces);
+            return {
+                isOn: dataPieces[0].toLowerCase() === 'on',
+                mode: (<any>Mode)[dataPieces[1]],
+                currentTempInCelsius: parseFloat(dataPieces[2].substring(4)),
+                targetTempInCelsius: parseFloat(dataPieces[3].substring(4)),
+                fanSpeed: (<any>FanSpeed)[dataPieces[4].substring(10)]
+            };
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+
+    public async getCurrentPowerUsage(deviceId: string): Promise<number> {
+        try {
+            const data: string = await this.pythonUtils.executePython3(this.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'get-power-draw ' + deviceId]);
+            console.log(data);
+            return parseInt(data);
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
     }
 
     public async setPowerOnOff(deviceId: string, poweredOn: boolean): Promise<boolean> {
-        return false;
+        try {
+            const data: string = await this.pythonUtils.executePython3(this.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'turn ' + deviceId + ' ' + poweredOn ? 'on': 'off']);
+            console.log(data);
+            return true;
+        } catch (error) {
+            console.error(error);
+            return false;
+        }
     }
 
-    public async setTargetTemperature(deviceId: string, temperatureInCelcius: number): Promise<boolean> {
-        return false;
+    public async setTargetTemperature(deviceId: string, temperatureInCelsius: number): Promise<boolean> {
+        try {
+            const data: string = await this.pythonUtils.executePython3(this.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'set-temp ' + deviceId + ' ' + temperatureInCelsius]);
+            console.log(data);
+            return true;
+        } catch (error) {
+            console.error(error);
+            return false;
+        }
     }
 
     public async setMode(deviceId: string, mode: Mode): Promise<boolean> {
@@ -69,7 +110,14 @@ export class WideqAdapter {
     }
 
     public async setFanSpeed(deviceId: string, fanSpeed: FanSpeed): Promise<boolean> {
-        return false;
+        try {
+            const data: string = await this.pythonUtils.executePython3(this.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'set-speed ' + deviceId + ' ' + fanSpeed]);
+            console.log(data);
+            return true;
+        } catch (error) {
+            console.error(error);
+            return false;
+        }
     }
 
     public async setSwingModeV(deviceId: string, swingModeV: VSwingMode): Promise<boolean> {
@@ -97,24 +145,35 @@ export class WideqAdapter {
 
 //TODO: Testing only!
 setTimeout(async () => {
-    const testAdapter = new WideqAdapter('BE', 'en-UK');
-    const airCoolers: AirCooler[] = await testAdapter.listAirCoolers();
-    const airCooler: AirCooler = airCoolers[0];
-    console.log(airCooler);
-    const status: AirCoolerStatus = await testAdapter.getStatus();
-    console.log(status);
-
     const sleep = (ms: number) => {
         return new Promise(resolve => setTimeout(resolve, ms));
     };
 
-    let success: boolean = false;
-    //success = await testAdapter.setMode(airCooler.deviceId, Mode.COOL);
-    success = await testAdapter.setSwingModeV(airCooler.deviceId, VSwingMode.ONE);
-    console.log(success);
+    const testAdapter = new WideqAdapter('BE', 'en-UK');
+    const airCoolers: AirCooler[] = await testAdapter.listAirCoolers();
+    const airCooler: AirCooler = airCoolers[0];
+    console.log(airCooler);
+    let status: AirCoolerStatus = await testAdapter.getStatus(airCooler.deviceId);
+    console.log(status);
     await sleep(2500);
-    success = await testAdapter.setSwingModeH(airCooler.deviceId, HSwingMode.ONE);
-    console.log(success);
+    console.log(await testAdapter.getCurrentPowerUsage(airCooler.deviceId) + ' watts');
+
+    let success: boolean = false;
+    /*
+    await sleep(2500);
+    success = await testAdapter.setMode(airCooler.deviceId, Mode.COOL);
+    */
+
+    /*
+    await sleep(2500);
+    success = await testAdapter.setSwingModeV(airCooler.deviceId, VSwingMode.ALL);
+    await sleep(2500);
+    success = await testAdapter.setSwingModeH(airCooler.deviceId, HSwingMode.ALL);
+    await sleep(2500);
+    success = await testAdapter.setTargetTemperature(airCooler.deviceId, 18);
+    await sleep(2500);
+    success = await testAdapter.setFanSpeed(airCooler.deviceId, FanSpeed.HIGH);
+    */
 });
 
 export interface AirCooler {
@@ -123,7 +182,11 @@ export interface AirCooler {
 }
 
 export interface AirCoolerStatus {
-
+    isOn: boolean
+    mode: Mode,
+    currentTempInCelsius: number,
+    targetTempInCelsius: number,
+    fanSpeed: FanSpeed
 }
 
 /*
@@ -160,6 +223,8 @@ export enum Mode {
     FAN = "FAN",
     AI = "AI",
     HEAT = "HEAT",
+
+    //TODO: Figure out which mode settings actually work!
     AIRCLEAN = "AIRCLEAN",
     ACO = "ACO",
     AROMA = "AROMA",
@@ -175,6 +240,8 @@ export enum FanSpeed {
     MID = 'MID',
     MID_HIGH = 'MID_HIGH',
     HIGH = 'HIGH',
+
+    //TODO: Figure out which fan speed settings actually work!
     POWER = 'POWER',
     AUTO = 'AUTO',
     NATURE = 'NATURE',
