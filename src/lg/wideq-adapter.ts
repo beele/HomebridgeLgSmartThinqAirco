@@ -13,6 +13,8 @@ export class WideqAdapter {
     private readonly country: string;
     private readonly language: string;
 
+    //TODO: Build in some kind of queue since wideq is using and updating the one state file. Multiple concurrent python instances can give issues when they are all trying to change the state file!
+
     constructor(country: string, language: string) {
         this.wideqFolder = resolve(__dirname + '../../../resources/wideq/');
         this.wideqScriptFile = 'example.py';
@@ -163,6 +165,11 @@ setTimeout(async () => {
     await sleep(2500);
     success = await testAdapter.setMode(airCooler.deviceId, Mode.COOL);
     */
+
+    /*
+    await sleep(2500);
+    success = await testAdapter.setFanSpeed(airCooler.deviceId, FanSpeed.HIGH);
+     */
 
     /*
     await sleep(2500);
