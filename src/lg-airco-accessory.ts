@@ -14,8 +14,9 @@ import {
     Units
 } from "homebridge";
 
-import {AirCooler, HSwingMode, Mode, VSwingMode, WideqAdapter} from "./lg/wideq-adapter";
+import {AirCooler, FanSpeed, HSwingMode, Mode, VSwingMode, WideqAdapter} from "./lg/wideq-adapter";
 import {LgAircoController} from "./lg/lg-airco-controller";
+import {AsyncUtils} from "./utils/async-utils";
 
 export class LgAirCoolerAccessory implements AccessoryPlugin {
 
@@ -28,6 +29,8 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private airCooler: AirCooler;
     private controller: LgAircoController;
+
+    private handleRotationSpeedSetWithDebounce: Function;
 
     constructor(log: Logging, config: AccessoryConfig, api: API) {
         this.hap = api.hap;
@@ -61,8 +64,12 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
                 this.log('No air coolers found!');
                 return;
             }
+
             //TODO: Update interval from config, default now is 30 seconds.
             this.controller = new LgAircoController(this.airCooler);
+            this.handleRotationSpeedSetWithDebounce = AsyncUtils.debounce((newFanSpeed: FanSpeed) => {
+                this.controller.setFanSpeed(newFanSpeed);
+            }, 5000);
 
             this.heaterCoolerService.getCharacteristic(this.hap.Characteristic.Active)
                 .on(CharacteristicEventTypes.GET, this.handleActiveGet.bind(this))
@@ -223,7 +230,7 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private handleRotationSpeedSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
         console.log('Setting FAN SPEED: ' + value);
-        //TODO: Implement!
+        this.handleRotationSpeedSetWithDebounce(value);
         callback(null);
     }
 
