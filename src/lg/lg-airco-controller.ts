@@ -12,6 +12,10 @@ export class LgAircoController {
     private mode: Mode;
     private currentTemperatureInCelsius: number;
     private targetTemperatureInCelsius: number;
+
+    private targetCoolingTemperatureInCelsius: number;
+    private targetHeatingTemperatureInCelsius: number;
+
     private swingModeH: HSwingMode;
     private swingModeV: VSwingMode;
     private fanSpeed: FanSpeed;

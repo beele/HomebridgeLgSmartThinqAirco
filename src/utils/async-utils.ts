@@ -13,4 +13,8 @@ export class AsyncUtils {
 
         return debounced as (...args: Parameters<F>) => ReturnType<F>;
     };
+
+    public static sleep = (ms: number) => {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    };
 }

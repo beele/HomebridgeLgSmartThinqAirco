@@ -147,8 +147,11 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     private handleActiveSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
         console.log('Setting ACTIVE: ' + value);
         if (!this.powerStateWillChange) {
-            console.log('POWERING UP BY COMMAND!')
-            //TODO: Implement!
+            console.log('POWERING UP BY COMMAND!');
+
+            this.controller.setPowerState(value === this.hap.Characteristic.Active.ACTIVE);
+        } else {
+            this.powerStateWillChange = false;
         }
         callback(null);
     }
@@ -197,7 +200,17 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
             this.powerStateWillChange = true;
         }
 
-        //TODO: Implement!
+        switch (value) {
+            case this.hap.Characteristic.TargetHeaterCoolerState.COOL:
+                this.controller.setMode(Mode.COOL);
+                break;
+            case this.hap.Characteristic.TargetHeaterCoolerState.HEAT:
+                this.controller.setMode(Mode.HEAT);
+                break;
+            case this.hap.Characteristic.TargetHeaterCoolerState.AUTO:
+                break;
+        }
+
         callback(null);
     }
 
@@ -277,7 +290,18 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
             this.powerStateWillChange = true;
         }
 
-        //TODO: Implement!
+        setTimeout(async () => {
+            if (value === this.hap.Characteristic.SwingMode.SWING_ENABLED) {
+                await this.controller.setHorizontalSwingMode(HSwingMode.ALL);
+                await AsyncUtils.sleep(2000);
+                await this.controller.setVerticalSwingMode(VSwingMode.ALL);
+            } else {
+                await this.controller.setHorizontalSwingMode(HSwingMode.OFF);
+                await AsyncUtils.sleep(2000);
+                await this.controller.setVerticalSwingMode(VSwingMode.OFF);
+            }
+        });
+
         callback(null);
     }
 }
