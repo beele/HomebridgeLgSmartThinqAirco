@@ -17,6 +17,8 @@ import {
 import {AirCooler, FanSpeed, HSwingMode, Mode, VSwingMode, WideqAdapter} from "./lg/wideq-adapter";
 import {LgAircoController} from "./lg/lg-airco-controller";
 import {AsyncUtils} from "./utils/async-utils";
+import {DummyController} from "./lg/dummy-controller";
+import {Controller} from "./lg/controller";
 
 export class LgAirCoolerAccessory implements AccessoryPlugin {
 
@@ -28,7 +30,7 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     private readonly heaterCoolerService: Service;
 
     private airCooler: AirCooler;
-    private controller: LgAircoController;
+    private controller: Controller;
 
     private powerStateWillChange: boolean = false;
     private handleRotationSpeedSetWithDebounce: Function;
@@ -66,8 +68,8 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
                 return;
             }
 
-            //TODO: Update interval from config, default now is 30 seconds.
-            this.controller = new LgAircoController(this.airCooler);
+            //this.controller = new LgAircoController(this.airCooler, config.updateInterval);
+            this.controller = new DummyController(this.airCooler, config.updateInterval);
             this.handleRotationSpeedSetWithDebounce = AsyncUtils.debounce((newFanSpeed: FanSpeed) => {
                 this.controller.setFanSpeed(newFanSpeed);
             }, 5000);
@@ -146,8 +148,8 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private handleActiveSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
         console.log('Setting ACTIVE: ' + value);
-        if (!this.powerStateWillChange) {
-            console.log('POWERING UP BY COMMAND!');
+        if (!this.powerStateWillChange && !this.controller.isPoweredOn() === (value === this.hap.Characteristic.Active.ACTIVE)) {
+            console.log('SETTING POWERING BY COMMAND!');
 
             this.controller.setPowerState(value === this.hap.Characteristic.Active.ACTIVE);
         } else {
@@ -222,8 +224,8 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private handleCoolingThresholdTemperatureGet(callback: CharacteristicGetCallback): void {
         console.log('Getting COOLING TEMP...');
-        console.log(this.controller.getTargetTemperatureInCelsius());
-        callback(null, this.controller.getTargetTemperatureInCelsius());
+        console.log(this.controller.getTargetCoolingTemperatureInCelsius());
+        callback(null, this.controller.getTargetCoolingTemperatureInCelsius());
     }
 
     private handleCoolingThresholdTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
@@ -233,14 +235,14 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
             this.powerStateWillChange = true;
         }
 
-        //TODO: Implement!
+        this.controller.setTargetCoolingTemperatureInCelsius(value as number);
         callback(null);
     }
 
     private handleHeatingThresholdTemperatureGet(callback: CharacteristicGetCallback): void {
         console.log('Getting HEATING TEMP...');
-        console.log(this.controller.getTargetTemperatureInCelsius());
-        callback(null, this.controller.getTargetTemperatureInCelsius());
+        console.log(this.controller.getTargetHeatingTemperatureInCelsius());
+        callback(null, this.controller.getTargetHeatingTemperatureInCelsius());
     }
 
     private handleHeatingThresholdTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
@@ -250,7 +252,7 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
             this.powerStateWillChange = true;
         }
 
-        //TODO: Implement!
+        this.controller.setTargetHeatingTemperatureInCelsius(value as number);
         callback(null);
     }
 

@@ -1,27 +1,13 @@
 import {AirCooler, FanSpeed, HSwingMode, Mode, VSwingMode, WideqAdapter} from "./wideq-adapter";
+import {Controller} from "./controller";
 
-export class LgAircoController {
+export class LgAircoController extends Controller {
 
     private readonly adapter: WideqAdapter;
 
-    //Device information
-    private airCooler: AirCooler;
-
-    //State
-    private isOn: boolean;
-    private mode: Mode;
-    private currentTemperatureInCelsius: number;
-    private targetTemperatureInCelsius: number;
-
-    private targetCoolingTemperatureInCelsius: number;
-    private targetHeatingTemperatureInCelsius: number;
-
-    private swingModeH: HSwingMode;
-    private swingModeV: VSwingMode;
-    private fanSpeed: FanSpeed;
-    private powerDraw: number;
-
     constructor(airCooler: AirCooler,  updateInterval: number = 30000) {
+        super();
+
         this.adapter = new WideqAdapter(airCooler.country, airCooler.language);
         this.airCooler = airCooler;
 
@@ -71,6 +57,7 @@ export class LgAircoController {
             } else {
                 throw new Error('Could not change operational mode of the AC unit!');
             }
+            await this.setTargetTemperatureInCelsius(this.mode === Mode.COOL ? this.targetCoolingTemperatureInCelsius : this.targetHeatingTemperatureInCelsius);
         }
     }
 
@@ -78,8 +65,26 @@ export class LgAircoController {
         return this.currentTemperatureInCelsius;
     }
 
-    public getTargetTemperatureInCelsius(): number {
-        return this.targetTemperatureInCelsius;
+    public getTargetCoolingTemperatureInCelsius(): number {
+        return this.targetCoolingTemperatureInCelsius;
+    }
+
+    public setTargetCoolingTemperatureInCelsius(newTargetCoolingTemperatureInCelsius: number): void {
+        if (this.targetCoolingTemperatureInCelsius !== newTargetCoolingTemperatureInCelsius) {
+            this.isOn = true;
+            this.targetCoolingTemperatureInCelsius = newTargetCoolingTemperatureInCelsius;
+        }
+    }
+
+    public getTargetHeatingTemperatureInCelsius(): number {
+        return this.targetHeatingTemperatureInCelsius;
+    }
+
+    public setTargetHeatingTemperatureInCelsius(newTargetHeatingTemperatureInCelsius: number): void {
+        if (this.targetHeatingTemperatureInCelsius !== newTargetHeatingTemperatureInCelsius) {
+            this.isOn = true;
+            this.targetHeatingTemperatureInCelsius = newTargetHeatingTemperatureInCelsius;
+        }
     }
 
     public async setTargetTemperatureInCelsius(newTargetTemperatureInCelsius: number): Promise<void> {
