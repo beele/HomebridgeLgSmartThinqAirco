@@ -29,6 +29,7 @@ export class DummyController extends Controller {
     public async setPowerState(powerOn: boolean): Promise<void> {
         if (this.isOn !== powerOn) {
             this.isOn = powerOn;
+            console.log('Setting power value: ' + powerOn);
         }
     }
 
@@ -40,6 +41,7 @@ export class DummyController extends Controller {
         if (this.mode !== newTargetMode) {
             this.isOn = true;
             this.mode = newTargetMode;
+            console.log('Setting mode value: ' + newTargetMode);
             await this.setTargetTemperatureInCelsius(this.mode === Mode.COOL ? this.targetCoolingTemperatureInCelsius : this.targetHeatingTemperatureInCelsius);
         }
     }
@@ -74,6 +76,7 @@ export class DummyController extends Controller {
         if (this.targetTemperatureInCelsius !== newTargetTemperatureInCelsius) {
             this.isOn = true;
             this.targetTemperatureInCelsius = newTargetTemperatureInCelsius;
+            console.log('Setting temperature value: ' + newTargetTemperatureInCelsius);
         }
     }
 
@@ -85,6 +88,7 @@ export class DummyController extends Controller {
         if (this.swingModeV !== newVerticalSwingMode) {
             this.isOn = true;
             this.swingModeV = newVerticalSwingMode;
+            console.log('Setting swing V value: ' + newVerticalSwingMode);
         }
     }
 
@@ -96,6 +100,7 @@ export class DummyController extends Controller {
         if (this.swingModeH !== newHorizontalSwingMode) {
             this.isOn = true;
             this.swingModeH = newHorizontalSwingMode;
+            console.log('Setting swing H value: ' + newHorizontalSwingMode);
         }
     }
 
@@ -107,6 +112,7 @@ export class DummyController extends Controller {
         if (this.fanSpeed !== newFanSpeed) {
             this.isOn = true;
             this.fanSpeed = newFanSpeed;
+            console.log('Setting fan speed value: ' + newFanSpeed);
         }
     }
 }
