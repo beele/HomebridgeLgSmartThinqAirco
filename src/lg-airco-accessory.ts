@@ -34,8 +34,11 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
         this.log = log;
         this.config = config;
 
-        this.informationService = new this.hap.Service.AccessoryInformation();
-        this.heaterCoolerService = new this.hap.Service.HeaterCooler(config.name);
+        this.informationService = new this.hap.Service.AccessoryInformation()
+            .setCharacteristic(this.hap.Characteristic.Manufacturer, 'LG')
+            .setCharacteristic(this.hap.Characteristic.Model, 'AIR CONDITIONER')
+            .setCharacteristic(this.hap.Characteristic.SerialNumber, this.config.model);
+        this.heaterCoolerService = new this.hap.Service.HeaterCooler(this.config.name);
 
         setTimeout(async () => {
             console.log(this.config);
@@ -60,11 +63,6 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
             }
             //TODO: Update interval from config, default now is 30 seconds.
             this.controller = new LgAircoController(this.airCooler);
-
-            this.informationService
-                .setCharacteristic(this.hap.Characteristic.Manufacturer, "LG")
-                .setCharacteristic(this.hap.Characteristic.Model, this.airCooler.deviceType)
-                .setCharacteristic(this.hap.Characteristic.SerialNumber, this.airCooler.modelName);
 
             this.heaterCoolerService.getCharacteristic(this.hap.Characteristic.Active)
                 .on(CharacteristicEventTypes.GET, this.handleActiveGet.bind(this))
@@ -139,7 +137,9 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleActiveSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
-
+        console.log('Setting ACTIVE: ' + value);
+        //TODO: Implement!
+        callback(null);
     }
 
     private handleCurrentHeaterCoolerStateGet(callback: CharacteristicGetCallback): void {
@@ -180,7 +180,9 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleTargetHeaterCoolerStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
-
+        console.log('Setting TARGET STATE: ' + value);
+        //TODO: Implement!
+        callback(null);
     }
 
     private handleCurrentTemperatureGet(callback: CharacteristicGetCallback): void {
@@ -196,7 +198,9 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleCoolingThresholdTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
-
+        console.log('Setting COOLING TEMP: ' + value);
+        //TODO: Implement!
+        callback(null);
     }
 
     private handleHeatingThresholdTemperatureGet(callback: CharacteristicGetCallback): void {
@@ -206,17 +210,21 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleHeatingThresholdTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
-
+        console.log('Setting HEATING TEMP: ' + value);
+        //TODO: Implement!
+        callback(null);
     }
 
     private handleRotationSpeedGet(callback: CharacteristicGetCallback): void {
         console.log('Getting FAN SPEED...');
-        console.log(WideqAdapter.fanSpeedToPercentage(this.controller.getFanSpeed()));
-        callback(null, WideqAdapter.fanSpeedToPercentage(this.controller.getFanSpeed()));
+        console.log(Math.round(WideqAdapter.fanSpeedToPercentage(this.controller.getFanSpeed())));
+        callback(null, Math.round(WideqAdapter.fanSpeedToPercentage(this.controller.getFanSpeed())));
     }
 
     private handleRotationSpeedSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
-
+        console.log('Setting FAN SPEED: ' + value);
+        //TODO: Implement!
+        callback(null);
     }
 
     private handleSwingModeGet(callback: CharacteristicGetCallback): void {
@@ -232,6 +240,8 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleSwingModeSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
-
+        console.log('Setting SWING MODE: ' + value);
+        //TODO: Implement!
+        callback(null);
     }
 }

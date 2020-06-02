@@ -19,29 +19,23 @@ export class LgAircoController {
 
     constructor(airCooler: AirCooler,  updateInterval: number = 30000) {
         this.adapter = new WideqAdapter(airCooler.country, airCooler.language);
-
         this.airCooler = airCooler;
 
-        //TODO: Fetch & assign initial state
-        this.isOn = false;
-        this.mode = Mode.COOL;
-        this.currentTemperatureInCelsius = -1;
-        this.targetTemperatureInCelsius = 18;
-        this.swingModeH = HSwingMode.ALL;
-        this.swingModeV = VSwingMode.ALL;
-        this.fanSpeed = FanSpeed.LOW;
-        this.powerDraw = 0;
-
+        this.update();
         setInterval(async () => {
             //TODO: If an action is still pending, postpone state update?
-            const status = await this.adapter.getStatus(this.airCooler.deviceId);
-            this.powerDraw = await this.adapter.getCurrentPowerUsage(this.airCooler.deviceId);
-            this.isOn = status.isOn;
-            this.mode = status.mode;
-            this.currentTemperatureInCelsius = status.currentTempInCelsius;
-            this.targetTemperatureInCelsius = status.targetTempInCelsius;
-            this.fanSpeed = status.fanSpeed;
+            await this.update();
         }, updateInterval);
+    }
+
+    private async update(): Promise<void> {
+        const status = await this.adapter.getStatus(this.airCooler.deviceId);
+        this.powerDraw = await this.adapter.getCurrentPowerUsage(this.airCooler.deviceId);
+        this.isOn = status.isOn;
+        this.mode = status.mode;
+        this.currentTemperatureInCelsius = status.currentTempInCelsius;
+        this.targetTemperatureInCelsius = status.targetTempInCelsius;
+        this.fanSpeed = status.fanSpeed;
     }
 
     public isPoweredOn(): boolean {

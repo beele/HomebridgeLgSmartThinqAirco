@@ -206,45 +206,6 @@ export class WideqAdapter {
     }
 }
 
-//TODO: Testing only!
-setTimeout(async () => {
-    const sleep = (ms: number) => {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    };
-
-    const airCoolers: AirCooler[] = await WideqAdapter.listAirCoolers('BE', 'en-UK');
-    const airCooler: AirCooler = airCoolers[0];
-    console.log(airCooler);
-
-    const testAdapter = new WideqAdapter('BE', 'en-UK');
-    let status: AirCoolerStatus = await testAdapter.getStatus(airCooler.deviceId);
-    console.log(status);
-    await sleep(2500);
-    console.log(await testAdapter.getCurrentPowerUsage(airCooler.deviceId) + ' watts');
-
-    let success: boolean = false;
-    /*
-    await sleep(2500);
-    success = await testAdapter.setMode(airCooler.deviceId, Mode.COOL);
-    */
-
-    /*
-    await sleep(2500);
-    success = await testAdapter.setFanSpeed(airCooler.deviceId, FanSpeed.HIGH);
-     */
-
-    /*
-    await sleep(2500);
-    success = await testAdapter.setSwingModeV(airCooler.deviceId, VSwingMode.ALL);
-    await sleep(2500);
-    success = await testAdapter.setSwingModeH(airCooler.deviceId, HSwingMode.ALL);
-    await sleep(2500);
-    success = await testAdapter.setTargetTemperature(airCooler.deviceId, 18);
-    await sleep(2500);
-    success = await testAdapter.setFanSpeed(airCooler.deviceId, FanSpeed.HIGH);
-    */
-});
-
 export interface AirCooler {
     deviceId: string;
     deviceType: string;
