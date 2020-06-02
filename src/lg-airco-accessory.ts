@@ -24,12 +24,13 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     private readonly log: Logging;
     private readonly config: AccessoryConfig;
 
-    private informationService: Service;
-    private heaterCoolerService: Service;
+    private readonly informationService: Service;
+    private readonly heaterCoolerService: Service;
 
     private airCooler: AirCooler;
     private controller: LgAircoController;
 
+    private powerStateWillChange: boolean = false;
     private handleRotationSpeedSetWithDebounce: Function;
 
     constructor(log: Logging, config: AccessoryConfig, api: API) {
@@ -145,7 +146,10 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private handleActiveSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
         console.log('Setting ACTIVE: ' + value);
-        //TODO: Implement!
+        if (!this.powerStateWillChange) {
+            console.log('POWERING UP BY COMMAND!')
+            //TODO: Implement!
+        }
         callback(null);
     }
 
@@ -188,6 +192,11 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private handleTargetHeaterCoolerStateSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
         console.log('Setting TARGET STATE: ' + value);
+
+        if (!this.controller.isPoweredOn()) {
+            this.powerStateWillChange = true;
+        }
+
         //TODO: Implement!
         callback(null);
     }
@@ -206,6 +215,11 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private handleCoolingThresholdTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
         console.log('Setting COOLING TEMP: ' + value);
+
+        if (!this.controller.isPoweredOn()) {
+            this.powerStateWillChange = true;
+        }
+
         //TODO: Implement!
         callback(null);
     }
@@ -218,6 +232,11 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private handleHeatingThresholdTemperatureSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
         console.log('Setting HEATING TEMP: ' + value);
+
+        if (!this.controller.isPoweredOn()) {
+            this.powerStateWillChange = true;
+        }
+
         //TODO: Implement!
         callback(null);
     }
@@ -230,6 +249,11 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private handleRotationSpeedSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
         console.log('Setting FAN SPEED: ' + value);
+
+        if (!this.controller.isPoweredOn()) {
+            this.powerStateWillChange = true;
+        }
+
         this.handleRotationSpeedSetWithDebounce(value);
         callback(null);
     }
@@ -248,6 +272,11 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private handleSwingModeSet(value: CharacteristicValue, callback: CharacteristicSetCallback): void {
         console.log('Setting SWING MODE: ' + value);
+
+        if (!this.controller.isPoweredOn()) {
+            this.powerStateWillChange = true;
+        }
+
         //TODO: Implement!
         callback(null);
     }

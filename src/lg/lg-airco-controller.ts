@@ -128,7 +128,7 @@ export class LgAircoController {
     }
 
     public async setFanSpeed(newFanSpeed: FanSpeed): Promise<void> {
-        /*if (this.fanSpeed !== newFanSpeed) {
+        if (this.fanSpeed !== newFanSpeed) {
             const succeeded: boolean = await this.adapter.setFanSpeed(this.airCooler.deviceId, newFanSpeed);
             if (succeeded) {
                 this.isOn = true;
@@ -136,9 +136,6 @@ export class LgAircoController {
             } else {
                 throw new Error('Could not set new fan speed of the AC unit!');
             }
-        }*/
-        console.log('SPEED SET!');
-        this.isOn = true;
-        this.fanSpeed = newFanSpeed;
+        }
     }
 }
