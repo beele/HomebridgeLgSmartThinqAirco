@@ -1,23 +1,18 @@
-const exec = require('child_process').exec;
+const {spawn} = require('child_process');
 
 export class PythonUtils {
 
     public static async executePython3(workingDir: string, scriptName: string, args: string[], forceCloseProcessAfterOutput: boolean = false): Promise<string> {
         const pythonArgs: string[] = [];
         for (const arg of args) {
-            pythonArgs.push(arg);
+            pythonArgs.push(arg.trim());
         }
 
         return new Promise((resolve, reject) => {
             let data: string[] = [];
 
             console.log('python3 -u example.py ' + pythonArgs.join(' '));
-            const process = exec('python3 -u example.py ' + pythonArgs.join(' '), {cwd: workingDir}, (error: any) => {
-                if (error) {
-                    console.error(error);
-                    reject(error);
-                }
-            });
+            const process = spawn('python3', ['-u', 'example.py'].concat(pythonArgs), {cwd: workingDir});
 
             process.stdout.on('data', (output: any) => {
                 console.log(output.toString());

@@ -8,7 +8,7 @@ Next open the config.json that contains your Homebridge configuration and add a 
 ```json
 {
     "accessory": "LgAirCooler",
-    "name": "Airco",
+    "name": "LG Airco",
     "deviceId": "OPTIONAL_DEVICE_ID",
     "model": "AC RAC_056905_WW",
     "country": "BE",
@@ -26,6 +26,7 @@ The `name` field is for the display name in the HomeKit app.
 The `deviceId` field is the device id for you cooler, optional, only provide this if you have more than one AC unit! instructions below how to obtain it!
 The `country` field is the 2 letter country code (XX) of the chosen country of your LG SmartThinq account.
 The `language` field is the 4 letter language code (xx-XX) of the chosen language of your LG SmartThinq account.
+The `model` field is the model of the AC unit being used. This value is used to show in the information section.
 The `maxCoolingTemp` field is the maximum settable temperature when in COOLING mode.
 The `minCoolingTemp` field is the minimum settable temperature when in COOLING mode.
 The `maxHeatingTemp` field is the maximum settable temperature when in HEATING mode.
@@ -43,14 +44,15 @@ After that an update of the state is performed every minute.
 
 ## Setup guide
 
-- After installing the plugin with the command found in the beginning of the readme, with a terminal navigate to the folder where it is installed.
-- On a Raspberry Pi this will most likely be located at `/usr/lib/node_modules/homebridge-lg-airco`.
-- Once in this folder navigate further down to `resources/wideq`.
-- Execute the command `python3 example.py -c "country-code" -l "language-code" -s "wideq_state.json" ls` where you should replace `country-code` and `language-code` with the respective values.
-  For example: `python3 example.py -c "BE" -l "en-UK" -s "wideq_state.json" ls`
+- Open a terminal on the device where you installed this plugin and type: `npm root -g`
+- Navigate to the path that the previous command has printed out
+- Enter the folder of the plugin to where the wideq files are: `cd homebridge-lg-airco/resources/wideq`
+- Execute the command `sudo python3 example.py -c country-code -l language-code` where you should replace `country-code` and `language-code` with the respective values.
+  For example: `sudo python3 example.py -c BE -l en-UK`
 - Follow the instructions on the screen, and paste the resulting URL back into the terminal.
-  The command will now print out a list of all known devices for your account, select the one you want and paste the value in the `config.json` file at the `id` field of the corresponding accessory definition.
+  The command will now print out a list of all known devices for your account. If wanted select the one you want and paste the value in the `config.json` file at the `deviceId` field of the corresponding accessory definition.
   It will also generate a file in which the session is stored.
+- Set the file permissions on the state file with this command (osx/linux): `sudo chmod a+rw wideq_state.json`
 - The plugin is now fully ready to be used in Homebridge!
 - Note! If you update the plugin, make sure to re-execute the command above with your specific parameters! (because updating the plugin removes the file in which the session is stored!)
 

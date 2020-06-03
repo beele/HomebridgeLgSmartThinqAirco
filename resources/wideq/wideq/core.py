@@ -28,6 +28,14 @@ RETRY_COUNT = 5  # Anecdotally this seems sufficient.
 RETRY_FACTOR = 0.5
 RETRY_STATUSES = (502, 503, 504)
 
+# Fix for dh-key-too-small error in python 3.7.x
+requests.packages.urllib3.disable_warnings()
+requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
+try:
+    requests.packages.urllib3.contrib.pyopenssl.DEFAULT_SSL_CIPHER_LIST += 'HIGH:!DH:!aNULL'
+except AttributeError:
+    # no pyopenssl support used / needed / available
+    pass
 
 def get_wideq_logger() -> logging.Logger:
     level = logging.INFO

@@ -18,7 +18,7 @@ export class WideqAdapter {
     }
 
     public static async listAirCoolers(country: string, language: string): Promise<Array<AirCooler>> {
-        const data: string = await PythonUtils.executePython3(this.wideqFolder, this.wideqScriptFile, ['-c ' + country, '-l ' + language, '-v', 'ls']);
+        const data: string = await PythonUtils.executePython3(this.wideqFolder, this.wideqScriptFile, ['-c', country, '-l', language, '-v', 'ls']);
 
         const devices = data.split('\n');
 
@@ -47,7 +47,7 @@ export class WideqAdapter {
 
     public async getStatus(deviceId: string): Promise<AirCoolerStatus> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'ac-mon ' + deviceId], true);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'ac-mon', deviceId], true);
             console.log(data);
 
             const dataPieces: string[] = data.split(';').map(s => s.trim());
@@ -67,7 +67,7 @@ export class WideqAdapter {
 
     public async getCurrentPowerUsage(deviceId: string): Promise<number> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'get-power-draw ' + deviceId]);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'get-power-draw', deviceId]);
             console.log(data);
             return parseInt(data);
         } catch (error) {
@@ -78,7 +78,7 @@ export class WideqAdapter {
 
     public async setPowerOnOff(deviceId: string, poweredOn: boolean): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'turn ' + deviceId + ' ' + (poweredOn ? 'on': 'off')]);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'turn', deviceId, (poweredOn ? 'on': 'off')]);
             console.log(data);
             return true;
         } catch (error) {
@@ -89,7 +89,7 @@ export class WideqAdapter {
 
     public async setTargetTemperature(deviceId: string, temperatureInCelsius: number): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'set-temp ' + deviceId + ' ' + temperatureInCelsius]);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'set-temp', deviceId, (temperatureInCelsius + '')]);
             console.log(data);
             return true;
         } catch (error) {
@@ -100,7 +100,7 @@ export class WideqAdapter {
 
     public async setMode(deviceId: string, mode: Mode): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'set-mode ' + deviceId + ' ' + mode]);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'set-mode', deviceId, mode]);
             console.log(data);
             return true;
         } catch (error) {
@@ -111,7 +111,7 @@ export class WideqAdapter {
 
     public async setFanSpeed(deviceId: string, fanSpeed: FanSpeed): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'set-speed ' + deviceId + ' ' + fanSpeed]);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'set-speed', deviceId, fanSpeed]);
             console.log(data);
             return true;
         } catch (error) {
@@ -122,7 +122,7 @@ export class WideqAdapter {
 
     public async setSwingModeV(deviceId: string, swingModeV: VSwingMode): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'set-swing-v ' + deviceId + ' ' + swingModeV]);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'set-swing-v', deviceId, swingModeV]);
             console.log(data);
             return true;
         } catch (error) {
@@ -133,7 +133,7 @@ export class WideqAdapter {
 
     public async setSwingModeH(deviceId: string, swingModeH: HSwingMode): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'set-swing-h ' + deviceId + ' ' + swingModeH]);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'set-swing-h', deviceId, swingModeH]);
             console.log(data);
             return true;
         } catch (error) {
