@@ -5,28 +5,40 @@ This Homebridge plugin allows control over a Smart Thinq enabled LG Airco unit.
 To install this plugin simple type `sudo npm install homebridge-lg-airco -g --unsafe-perm=true`.
 Next open the config.json that contains your Homebridge configuration and add a block like the following one to the accessories array:
 
-```javascript
+```json
 {
-    "accessory": "HomebridgeLgAirco",
-    "name": "display-name",
-    "id": "cooler-id",
-    "country": "country-code",
-    "language": "language-code"
+    "accessory": "LgAirCooler",
+    "name": "Airco",
+    "deviceId": "OPTIONAL_DEVICE_ID",
+    "model": "AC RAC_056905_WW",
+    "country": "BE",
+    "language": "en-UK",
+    "maxCoolingTemp": 26,
+    "minCoolingTemp": 18,
+    "maxHeatingTemp": 30,
+    "minHeatingTemp": 5,
+    "updateInterval": 60000
 }
 ```
 
-The accessory name has to be `HomebridgeLgAirco` to link to the plugin.
+The accessory name has to be `LgAirCooler` to link to the plugin.
 The `name` field is for the display name in the HomeKit app.
-The `id` field is the device id for you cooler, instructions below how to obtain it!
+The `deviceId` field is the device id for you cooler, optional, only provide this if you have more than one AC unit! instructions below how to obtain it!
 The `country` field is the 2 letter country code (XX) of the chosen country of your LG SmartThinq account.
 The `language` field is the 4 letter language code (xx-XX) of the chosen language of your LG SmartThinq account.
+The `maxCoolingTemp` field is the maximum settable temperature when in COOLING mode.
+The `minCoolingTemp` field is the minimum settable temperature when in COOLING mode.
+The `maxHeatingTemp` field is the maximum settable temperature when in HEATING mode.
+The `minHeatingTemp` field is the minimum settable temperature when in HEATING mode.
+The `updateInterval` field is the interval that is used to fetch new state data from the AC unit. In milliseconds!
 
-The initial state will be fetched shortly after booting your homebridge instance. 
+The initial state will be fetched shortly after booting your Homebridge instance. 
 After that an update of the state is performed every minute.
 
-## Hardware Requirements
+## Requirements
 
 - A SmartThinq compatible LG airco unit (Tested with an PC12SQ NSJ)
+- Registered through the V1 LG API!!! V2 API is NOT YET supported!!!
 
 
 ## Setup guide
