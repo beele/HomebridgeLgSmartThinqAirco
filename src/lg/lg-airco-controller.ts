@@ -25,6 +25,8 @@ export class LgAircoController extends Controller {
         this.mode = status.mode;
         this.currentTemperatureInCelsius = status.currentTempInCelsius;
         this.targetTemperatureInCelsius = status.targetTempInCelsius;
+        this.targetCoolingTemperatureInCelsius = status.targetTempInCelsius;
+        this.targetHeatingTemperatureInCelsius = status.targetTempInCelsius;
         this.fanSpeed = status.fanSpeed;
     }
 
@@ -58,6 +60,8 @@ export class LgAircoController extends Controller {
                 throw new Error('Could not change operational mode of the AC unit!');
             }
             await this.setTargetTemperatureInCelsius(this.mode === Mode.COOL ? this.targetCoolingTemperatureInCelsius : this.targetHeatingTemperatureInCelsius);
+        } else {
+            await this.setPowerState(true);
         }
     }
 
@@ -73,6 +77,10 @@ export class LgAircoController extends Controller {
         if (this.targetCoolingTemperatureInCelsius !== newTargetCoolingTemperatureInCelsius) {
             this.isOn = true;
             this.targetCoolingTemperatureInCelsius = newTargetCoolingTemperatureInCelsius;
+
+            if(this.mode === Mode.COOL) {
+                this.setTargetTemperatureInCelsius(this.targetCoolingTemperatureInCelsius);
+            }
         }
     }
 
@@ -84,6 +92,10 @@ export class LgAircoController extends Controller {
         if (this.targetHeatingTemperatureInCelsius !== newTargetHeatingTemperatureInCelsius) {
             this.isOn = true;
             this.targetHeatingTemperatureInCelsius = newTargetHeatingTemperatureInCelsius;
+
+            if(this.mode === Mode.HEAT) {
+                this.setTargetTemperatureInCelsius(this.targetHeatingTemperatureInCelsius);
+            }
         }
     }
 

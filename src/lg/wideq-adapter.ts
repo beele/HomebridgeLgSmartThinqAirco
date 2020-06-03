@@ -78,7 +78,7 @@ export class WideqAdapter {
 
     public async setPowerOnOff(deviceId: string, poweredOn: boolean): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'turn ' + deviceId + ' ' + poweredOn ? 'on': 'off']);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c ' + this.country, '-l ' + this.language, '-v', 'turn ' + deviceId + ' ' + (poweredOn ? 'on': 'off')]);
             console.log(data);
             return true;
         } catch (error) {

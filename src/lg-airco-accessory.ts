@@ -14,7 +14,7 @@ import {
     Units
 } from "homebridge";
 
-import {AirCooler, FanSpeed, HSwingMode, Mode, VSwingMode, WideqAdapter} from "./lg/wideq-adapter";
+import {AirCooler, HSwingMode, Mode, VSwingMode, WideqAdapter} from "./lg/wideq-adapter";
 import {LgAircoController} from "./lg/lg-airco-controller";
 import {AsyncUtils} from "./utils/async-utils";
 import {DummyController} from "./lg/dummy-controller";
@@ -68,10 +68,10 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
                 return;
             }
 
-            //this.controller = new LgAircoController(this.airCooler, config.updateInterval);
-            this.controller = new DummyController(this.airCooler, config.updateInterval);
-            this.handleRotationSpeedSetWithDebounce = AsyncUtils.debounce((newFanSpeed: FanSpeed) => {
-                this.controller.setFanSpeed(newFanSpeed);
+            this.controller = new LgAircoController(this.airCooler, config.updateInterval);
+            //this.controller = new DummyController(this.airCooler, config.updateInterval);
+            this.handleRotationSpeedSetWithDebounce = AsyncUtils.debounce((newFanSpeed: number) => {
+                this.controller.setFanSpeed(WideqAdapter.percentageToFanSpeed(newFanSpeed));
             }, 5000);
 
             this.heaterCoolerService.getCharacteristic(this.hap.Characteristic.Active)
@@ -141,8 +141,6 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleActiveGet(callback: CharacteristicGetCallback): void {
-        console.log('Getting ACTIVE...');
-        console.log(this.controller.isPoweredOn() ? this.hap.Characteristic.Active.ACTIVE : this.hap.Characteristic.Active.INACTIVE);
         callback(null, this.controller.isPoweredOn() ? this.hap.Characteristic.Active.ACTIVE : this.hap.Characteristic.Active.INACTIVE);
     }
 
@@ -156,9 +154,7 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleCurrentHeaterCoolerStateGet(callback: CharacteristicGetCallback): void {
-        console.log('Getting CURRENT STATE...');
         let currentHeaterCoolerState: any;
-
         if (!this.controller.isPoweredOn()) {
             currentHeaterCoolerState = this.hap.Characteristic.CurrentHeaterCoolerState.INACTIVE;
         } else {
@@ -181,13 +177,10 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
                     break;
             }
         }
-
-        console.log(currentHeaterCoolerState);
         callback(null, currentHeaterCoolerState)
     }
 
     private handleTargetHeaterCoolerStateGet(callback: CharacteristicGetCallback): void {
-        console.log('Getting TARGET STATE...');
         //This is the same in this implementation!
         this.handleCurrentHeaterCoolerStateGet(callback);
     }
@@ -212,14 +205,10 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleCurrentTemperatureGet(callback: CharacteristicGetCallback): void {
-        console.log('Getting CURRENT TEMP...');
-        console.log(this.controller.getCurrentTemperatureInCelsius());
         callback(null, this.controller.getCurrentTemperatureInCelsius());
     }
 
     private handleCoolingThresholdTemperatureGet(callback: CharacteristicGetCallback): void {
-        console.log('Getting COOLING TEMP...');
-        console.log(this.controller.getTargetCoolingTemperatureInCelsius());
         callback(null, this.controller.getTargetCoolingTemperatureInCelsius());
     }
 
@@ -233,8 +222,6 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleHeatingThresholdTemperatureGet(callback: CharacteristicGetCallback): void {
-        console.log('Getting HEATING TEMP...');
-        console.log(this.controller.getTargetHeatingTemperatureInCelsius());
         callback(null, this.controller.getTargetHeatingTemperatureInCelsius());
     }
 
@@ -248,8 +235,6 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleRotationSpeedGet(callback: CharacteristicGetCallback): void {
-        console.log('Getting FAN SPEED...');
-        console.log(Math.round(WideqAdapter.fanSpeedToPercentage(this.controller.getFanSpeed())));
         callback(null, Math.round(WideqAdapter.fanSpeedToPercentage(this.controller.getFanSpeed())));
     }
 
@@ -263,10 +248,6 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
     }
 
     private handleSwingModeGet(callback: CharacteristicGetCallback): void {
-        console.log('Getting SWING MODE...');
-        console.log(this.controller.getHorizontalSwingMode() === HSwingMode.ALL &&
-        this.controller.getVerticalSwingMode() === VSwingMode.ALL ?
-            this.hap.Characteristic.SwingMode.SWING_ENABLED : this.hap.Characteristic.SwingMode.SWING_DISABLED);
         callback(null,
             this.controller.getHorizontalSwingMode() === HSwingMode.ALL &&
             this.controller.getVerticalSwingMode() === VSwingMode.ALL ?
