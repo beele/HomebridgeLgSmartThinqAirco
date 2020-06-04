@@ -17,7 +17,9 @@ Next open the config.json that contains your Homebridge configuration and add a 
     "minCoolingTemp": 18,
     "maxHeatingTemp": 30,
     "minHeatingTemp": 5,
-    "updateInterval": 60000
+    "updateInterval": 60000,
+    "debug": false,
+    "dummy": false
 }
 ```
 
@@ -32,6 +34,8 @@ The `minCoolingTemp` field is the minimum settable temperature when in COOLING m
 The `maxHeatingTemp` field is the maximum settable temperature when in HEATING mode.
 The `minHeatingTemp` field is the minimum settable temperature when in HEATING mode.
 The `updateInterval` field is the interval that is used to fetch new state data from the AC unit. In milliseconds!
+The `debug` field is the boolean that enables or disables debug logging, set this to false unless collecting logs.
+The `dummy` field is the boolean that enables mocking out the LG API and will instead use a dummy AC unit with no network calls, only for development & testing!
 
 The initial state will be fetched shortly after booting your Homebridge instance. 
 After that an update of the state is performed every minute.
@@ -47,14 +51,12 @@ After that an update of the state is performed every minute.
 - Open a terminal on the device where you installed this plugin and type: `npm root -g`
 - Navigate to the path that the previous command has printed out
 - Enter the folder of the plugin to where the wideq files are: `cd homebridge-lg-airco/resources/wideq`
-- Execute the command `sudo python3 example.py -c country-code -l language-code` where you should replace `country-code` and `language-code` with the respective values.
-  For example: `sudo python3 example.py -c BE -l en-UK`
+- Execute the command `python3 example.py -c country-code -l language-code -p path-to-homebridge-folder` where you should replace `country-code`, `language-code` and `path-to-homebridge-folder` with the respective values.
+  For example: `python3 example.py -c BE -l en-UK -p /home/pi/.homebridge`
 - Follow the instructions on the screen, and paste the resulting URL back into the terminal.
   The command will now print out a list of all known devices for your account. If wanted select the one you want and paste the value in the `config.json` file at the `deviceId` field of the corresponding accessory definition.
-  It will also generate a file in which the session is stored.
-- Set the file permissions on the state file with this command (osx/linux): `sudo chmod a+rw wideq_state.json`
+  It will also generate a file in which the session is stored in the Homebridge folder.
 - The plugin is now fully ready to be used in Homebridge!
-- Note! If you update the plugin, make sure to re-execute the command above with your specific parameters! (because updating the plugin removes the file in which the session is stored!)
 
 This code makes use of the `WideQ` library, more information [here](https://github.com/sampsyo/wideq). 
 Some changes have been made to the included version of the WideQ library.

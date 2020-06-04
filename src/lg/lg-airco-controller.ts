@@ -5,10 +5,10 @@ export class LgAircoController extends Controller {
 
     private readonly adapter: WideqAdapter;
 
-    constructor(airCooler: AirCooler,  updateInterval: number = 30000) {
+    constructor(airCooler: AirCooler,  updateInterval: number, storagePath: string, debugEnabled: boolean, debugLogger: Function) {
         super();
 
-        this.adapter = new WideqAdapter(airCooler.country, airCooler.language);
+        this.adapter = new WideqAdapter(airCooler.country, airCooler.language, storagePath, debugEnabled, debugLogger);
         this.airCooler = airCooler;
 
         this.update();

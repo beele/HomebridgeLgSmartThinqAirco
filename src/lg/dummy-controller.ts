@@ -3,7 +3,9 @@ import {Controller} from "./controller";
 
 export class DummyController extends Controller {
 
-    constructor(airCooler: AirCooler,  updateInterval: number = 30000) {
+    private logDebug: Function;
+
+    constructor(airCooler: AirCooler,  updateInterval: number, debugLogger: Function) {
         super();
 
         this.airCooler = airCooler;
@@ -19,6 +21,8 @@ export class DummyController extends Controller {
 
         this.targetCoolingTemperatureInCelsius = 18;
         this.targetHeatingTemperatureInCelsius = 21;
+
+        this.logDebug = debugLogger;
     }
 
     public isPoweredOn(): boolean {
@@ -28,12 +32,12 @@ export class DummyController extends Controller {
     public async setPowerState(powerOn: boolean): Promise<void> {
         if (this.isOn !== powerOn) {
             this.isOn = powerOn;
-            console.log('Setting power value: ' + (powerOn ? 'ON' : 'OFF'));
+            this.logDebug('Setting power value: ' + (powerOn ? 'ON' : 'OFF'));
         }
     }
 
     public getMode(): Mode {
-        console.log('Getting mode value: ' + this.mode);
+        this.logDebug('Getting mode value: ' + this.mode);
         return this.mode;
     }
 
@@ -41,7 +45,7 @@ export class DummyController extends Controller {
         if (this.mode !== newTargetMode) {
             this.isOn = true;
             this.mode = newTargetMode;
-            console.log('Setting mode value: ' + newTargetMode);
+            this.logDebug('Setting mode value: ' + newTargetMode);
             await this.setTargetTemperatureInCelsius(this.mode === Mode.COOL ? this.targetCoolingTemperatureInCelsius : this.targetHeatingTemperatureInCelsius);
         } else {
             this.setPowerState(true);
@@ -49,12 +53,12 @@ export class DummyController extends Controller {
     }
 
     public getCurrentTemperatureInCelsius(): number {
-        console.log('Getting current temperature value: ' + this.currentTemperatureInCelsius);
+        this.logDebug('Getting current temperature value: ' + this.currentTemperatureInCelsius);
         return this.currentTemperatureInCelsius;
     }
 
     public getTargetCoolingTemperatureInCelsius(): number {
-        console.log('Getting target temperature value: ' + this.targetCoolingTemperatureInCelsius);
+        this.logDebug('Getting target temperature value: ' + this.targetCoolingTemperatureInCelsius);
         return this.targetCoolingTemperatureInCelsius;
     }
 
@@ -70,7 +74,7 @@ export class DummyController extends Controller {
     }
 
     public getTargetHeatingTemperatureInCelsius(): number {
-        console.log('Getting target heating temperature value: ' + this.targetHeatingTemperatureInCelsius);
+        this.logDebug('Getting target heating temperature value: ' + this.targetHeatingTemperatureInCelsius);
         return this.targetHeatingTemperatureInCelsius;
     }
 
@@ -89,12 +93,12 @@ export class DummyController extends Controller {
         if (this.targetTemperatureInCelsius !== newTargetTemperatureInCelsius) {
             this.isOn = true;
             this.targetTemperatureInCelsius = newTargetTemperatureInCelsius;
-            console.log('Setting temperature value: ' + newTargetTemperatureInCelsius);
+            this.logDebug('Setting temperature value: ' + newTargetTemperatureInCelsius);
         }
     }
 
     public getVerticalSwingMode(): VSwingMode {
-        console.log('Getting v-swing value: ' + this.swingModeV);
+        this.logDebug('Getting v-swing value: ' + this.swingModeV);
         return this.swingModeV;
     }
 
@@ -102,12 +106,12 @@ export class DummyController extends Controller {
         if (this.swingModeV !== newVerticalSwingMode) {
             this.isOn = true;
             this.swingModeV = newVerticalSwingMode;
-            console.log('Setting swing V value: ' + newVerticalSwingMode);
+            this.logDebug('Setting swing V value: ' + newVerticalSwingMode);
         }
     }
 
     public getHorizontalSwingMode(): HSwingMode {
-        console.log('Getting h-swing value: ' + this.swingModeH);
+        this.logDebug('Getting h-swing value: ' + this.swingModeH);
         return this.swingModeH;
     }
 
@@ -115,12 +119,12 @@ export class DummyController extends Controller {
         if (this.swingModeH !== newHorizontalSwingMode) {
             this.isOn = true;
             this.swingModeH = newHorizontalSwingMode;
-            console.log('Setting swing H value: ' + newHorizontalSwingMode);
+            this.logDebug('Setting swing H value: ' + newHorizontalSwingMode);
         }
     }
 
     public getFanSpeed(): FanSpeed {
-        console.log('Getting fan speed value: ' + this.fanSpeed);
+        this.logDebug('Getting fan speed value: ' + this.fanSpeed);
         return this.fanSpeed;
     }
 
@@ -128,7 +132,7 @@ export class DummyController extends Controller {
         if (this.fanSpeed !== newFanSpeed) {
             this.isOn = true;
             this.fanSpeed = newFanSpeed;
-            console.log('Setting fan speed value: ' + newFanSpeed);
+            this.logDebug('Setting fan speed value: ' + newFanSpeed);
         }
     }
 }

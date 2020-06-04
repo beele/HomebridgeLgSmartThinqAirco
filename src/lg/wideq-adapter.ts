@@ -9,16 +9,20 @@ export class WideqAdapter {
 
     private readonly country: string;
     private readonly language: string;
+    private readonly storagePath: string;
+    private readonly debug: boolean;
+    private readonly logDebug: Function;
 
-    //TODO: Build in some kind of queue since wideq is using and updating the one state file. Multiple concurrent python instances can give issues when they are all trying to change the state file!
-
-    constructor(country: string, language: string) {
+    constructor(country: string, language: string, storagePath: string, debug: boolean, debugLogger: Function) {
         this.country = country;
         this.language = language;
+        this.storagePath = storagePath;
+        this.logDebug = debugLogger;
     }
 
-    public static async listAirCoolers(country: string, language: string): Promise<Array<AirCooler>> {
-        const data: string = await PythonUtils.executePython3(this.wideqFolder, this.wideqScriptFile, ['-c', country, '-l', language, '-v', 'ls']);
+    public static async listAirCoolers(country: string, language: string, storagePath: string): Promise<Array<AirCooler>> {
+        console.log(storagePath);
+        const data: string = await PythonUtils.executePython3(this.wideqFolder, this.wideqScriptFile, ['-c', country, '-l', language, '-p', storagePath, '-v', 'ls']);
 
         const devices = data.split('\n');
 
@@ -47,11 +51,11 @@ export class WideqAdapter {
 
     public async getStatus(deviceId: string): Promise<AirCoolerStatus> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'ac-mon', deviceId], true);
-            console.log(data);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-p', this.storagePath, this.debug ? '-v' : null, 'ac-mon', deviceId], true);
+            this.logDebug(data);
 
             const dataPieces: string[] = data.split(';').map(s => s.trim());
-            console.log(dataPieces);
+            this.logDebug(dataPieces);
             return {
                 isOn: dataPieces[0].toLowerCase() === 'on',
                 mode: (<any>Mode)[dataPieces[1]],
@@ -60,84 +64,84 @@ export class WideqAdapter {
                 fanSpeed: (<any>FanSpeed)[dataPieces[4].substring(10)]
             };
         } catch (error) {
-            console.error(error);
+            this.logDebug(error);
             return null;
         }
     }
 
     public async getCurrentPowerUsage(deviceId: string): Promise<number> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'get-power-draw', deviceId]);
-            console.log(data);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-p', this.storagePath, this.debug ? '-v' : null, 'get-power-draw', deviceId]);
+            this.logDebug(data);
             return parseInt(data);
         } catch (error) {
-            console.error(error);
+            this.logDebug(error);
             return null;
         }
     }
 
     public async setPowerOnOff(deviceId: string, poweredOn: boolean): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'turn', deviceId, (poweredOn ? 'on': 'off')]);
-            console.log(data);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-p', this.storagePath, this.debug ? '-v' : null, 'turn', deviceId, (poweredOn ? 'on': 'off')]);
+            this.logDebug(data);
             return true;
         } catch (error) {
-            console.error(error);
+            this.logDebug(error);
             return false;
         }
     }
 
     public async setTargetTemperature(deviceId: string, temperatureInCelsius: number): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'set-temp', deviceId, (temperatureInCelsius + '')]);
-            console.log(data);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-p', this.storagePath, this.debug ? '-v' : null, 'set-temp', deviceId, (temperatureInCelsius + '')]);
+            this.logDebug(data);
             return true;
         } catch (error) {
-            console.error(error);
+            this.logDebug(error);
             return false;
         }
     }
 
     public async setMode(deviceId: string, mode: Mode): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'set-mode', deviceId, mode]);
-            console.log(data);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-p', this.storagePath, this.debug ? '-v' : null, 'set-mode', deviceId, mode]);
+            this.logDebug(data);
             return true;
         } catch (error) {
-            console.error(error);
+            this.logDebug(error);
             return false;
         }
     }
 
     public async setFanSpeed(deviceId: string, fanSpeed: FanSpeed): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'set-speed', deviceId, fanSpeed]);
-            console.log(data);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-p', this.storagePath, this.debug ? '-v' : null, 'set-speed', deviceId, fanSpeed]);
+            this.logDebug(data);
             return true;
         } catch (error) {
-            console.error(error);
+            this.logDebug(error);
             return false;
         }
     }
 
     public async setSwingModeV(deviceId: string, swingModeV: VSwingMode): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'set-swing-v', deviceId, swingModeV]);
-            console.log(data);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-p', this.storagePath, this.debug ? '-v' : null, 'set-swing-v', deviceId, swingModeV]);
+            this.logDebug(data);
             return true;
         } catch (error) {
-            console.error(error);
+            this.logDebug(error);
             return false;
         }
     }
 
     public async setSwingModeH(deviceId: string, swingModeH: HSwingMode): Promise<boolean> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-v', 'set-swing-h', deviceId, swingModeH]);
-            console.log(data);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-p', this.storagePath, this.debug ? '-v' : null, 'set-swing-h', deviceId, swingModeH]);
+            this.logDebug(data);
             return true;
         } catch (error) {
-            console.error(error);
+            this.logDebug(error);
             return false;
         }
     }

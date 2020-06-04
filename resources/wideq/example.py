@@ -10,7 +10,6 @@ import os.path
 import logging
 from typing import List
 
-STATE_FILE = 'wideq_state.json'
 LOGGER = logging.getLogger("wideq.example")
 
 
@@ -207,11 +206,12 @@ def example_command(client, cmd, args):
     func(client, *args)
 
 
-def example(country: str, language: str, verbose: bool,
+def example(country: str, language: str, path: str, verbose: bool,
             cmd: str, args: List[str]) -> None:
     if verbose:
         wideq.set_log_level(logging.DEBUG)
 
+    STATE_FILE = path
     # Load the current state for the example.
     try:
         with open(STATE_FILE) as f:
@@ -279,6 +279,11 @@ def main() -> None:
         help='verbose mode to help debugging',
         action='store_true', default=False
     )
+    parser.add_argument(
+        '--path', '-p',
+        help='path parameter specifying where to store the wideq state',
+        default='wideq_state.json'
+    )
 
     args = parser.parse_args()
     country_regex = re.compile(r"^[A-Z]{2,3}$")
@@ -294,7 +299,7 @@ def main() -> None:
                      " got: '%s'",
                      args.language)
         exit(1)
-    example(args.country, args.language, args.verbose, args.cmd, args.args)
+    example(args.country, args.language, args.path, args.verbose, args.cmd, args.args)
 
 
 if __name__ == '__main__':

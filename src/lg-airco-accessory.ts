@@ -19,12 +19,15 @@ import {LgAircoController} from "./lg/lg-airco-controller";
 import {AsyncUtils} from "./utils/async-utils";
 import {DummyController} from "./lg/dummy-controller";
 import {Controller} from "./lg/controller";
+import {PythonUtils} from "./utils/python-utils";
 
 export class LgAirCoolerAccessory implements AccessoryPlugin {
 
     private readonly hap: HAP;
     private readonly log: Logging;
     private readonly config: AccessoryConfig;
+    private readonly storagePath: string;
+    private readonly logDebug: Function;
 
     private readonly informationService: Service;
     private readonly heaterCoolerService: Service;
@@ -39,6 +42,9 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
         this.hap = api.hap;
         this.log = log;
         this.config = config;
+        this.storagePath = api.user.storagePath() + '/wideq_state.json';
+        this.logDebug = this.config.debug ? this.log : () => {};
+        PythonUtils.logDebug = this.logDebug;
 
         this.informationService = new this.hap.Service.AccessoryInformation()
             .setCharacteristic(this.hap.Characteristic.Manufacturer, 'LG')
@@ -47,8 +53,7 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
         this.heaterCoolerService = new this.hap.Service.HeaterCooler(this.config.name);
 
         setTimeout(async () => {
-            console.log(this.config);
-            const airCoolers: AirCooler[] = await WideqAdapter.listAirCoolers(this.config.country, this.config.language);
+            const airCoolers: AirCooler[] = await WideqAdapter.listAirCoolers(this.config.country, this.config.language, this.storagePath);
 
             if (airCoolers.length === 1) {
                 this.airCooler = airCoolers[0];
@@ -68,8 +73,12 @@ export class LgAirCoolerAccessory implements AccessoryPlugin {
                 return;
             }
 
-            this.controller = new LgAircoController(this.airCooler, config.updateInterval);
-            //this.controller = new DummyController(this.airCooler, config.updateInterval);
+            if (this.config.dummy) {
+                this.controller = new DummyController(this.airCooler, this.config.updateInterval, this.config.debug ? this.log : () => {});
+            } else {
+                this.controller = new LgAircoController(this.airCooler, this.config.updateInterval, this.storagePath, this.config.debug, this.logDebug);
+            }
+
             this.handleRotationSpeedSetWithDebounce = AsyncUtils.debounce((newFanSpeed: number) => {
                 this.controller.setFanSpeed(WideqAdapter.percentageToFanSpeed(newFanSpeed));
             }, 5000);
