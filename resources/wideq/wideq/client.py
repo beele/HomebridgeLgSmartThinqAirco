@@ -59,7 +59,11 @@ class Monitor(object):
         """
 
         data = self.poll()
-        return self.decode_json(data) if data else None
+        try: 
+            # Sometimes the V1 api returns an error in XML instead of JSON format, this breaks the JSON decode!
+            return self.decode_json(data) if data else None
+        except:
+            return None
 
     def __enter__(self) -> 'Monitor':
         self.start()

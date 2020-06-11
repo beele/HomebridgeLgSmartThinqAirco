@@ -20,14 +20,16 @@ export class LgAircoController extends Controller {
 
     private async update(): Promise<void> {
         const status = await this.adapter.getStatus(this.airCooler.deviceId);
-        this.powerDraw = await this.adapter.getCurrentPowerUsage(this.airCooler.deviceId);
-        this.isOn = status.isOn;
-        this.mode = status.mode;
-        this.currentTemperatureInCelsius = status.currentTempInCelsius;
-        this.targetTemperatureInCelsius = status.targetTempInCelsius;
-        this.targetCoolingTemperatureInCelsius = status.targetTempInCelsius;
-        this.targetHeatingTemperatureInCelsius = status.targetTempInCelsius;
-        this.fanSpeed = status.fanSpeed;
+        if (status) {
+            this.powerDraw = await this.adapter.getCurrentPowerUsage(this.airCooler.deviceId);
+            this.isOn = status.isOn;
+            this.mode = status.mode;
+            this.currentTemperatureInCelsius = status.currentTempInCelsius;
+            this.targetTemperatureInCelsius = status.targetTempInCelsius;
+            this.targetCoolingTemperatureInCelsius = status.targetTempInCelsius;
+            this.targetHeatingTemperatureInCelsius = status.targetTempInCelsius;
+            this.fanSpeed = status.fanSpeed;
+        }
     }
 
     public isPoweredOn(): boolean {

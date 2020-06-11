@@ -58,5 +58,5 @@ After that an update of the state is performed every minute.
   It will also generate a file in which the session is stored in the Homebridge folder.
 - The plugin is now fully ready to be used in Homebridge!
 
-This code makes use of the `WideQ` library, more information [here](https://github.com/sampsyo/wideq). 
+This code makes use of the `WideQ` library, more information [here](https://github.com/sampsyo/wideq).
 Some changes have been made to the included version of the WideQ library.
