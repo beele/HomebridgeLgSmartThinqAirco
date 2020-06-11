@@ -37,7 +37,7 @@ The `updateInterval` field is the interval that is used to fetch new state data 
 The `debug` field is the boolean that enables or disables debug logging, set this to false unless collecting logs.
 The `dummy` field is the boolean that enables mocking out the LG API and will instead use a dummy AC unit with no network calls, only for development & testing!
 
-The initial state will be fetched shortly after booting your Homebridge instance. 
+The initial state will be fetched shortly after booting your Homebridge instance.
 After that an update of the state is performed every minute.
 
 ## Requirements
@@ -45,14 +45,14 @@ After that an update of the state is performed every minute.
 - A SmartThinq compatible LG airco unit (Tested with an PC12SQ NSJ)
 - Registered through the V1 LG API!!! V2 API is NOT YET supported!!!
 
-
 ## Setup guide
 
 - Open a terminal on the device where you installed this plugin and type: `npm root -g`
 - Navigate to the path that the previous command has printed out
 - Enter the folder of the plugin to where the wideq files are: `cd homebridge-lg-airco/resources/wideq`
 - Execute the command `python3 example.py -c country-code -l language-code -p path-to-homebridge-folder` where you should replace `country-code`, `language-code` and `path-to-homebridge-folder` with the respective values.
-  For example: `python3 example.py -c BE -l en-UK -p /home/pi/.homebridge`
+  For example: `python3 example.py -c BE -l en-UK -p /home/pi/.homebridge/wideq_state.json`
+- Make sure the wideq_state.json does not exist yet! If the file is corrupted, delete it before executing the command again!
 - Follow the instructions on the screen, and paste the resulting URL back into the terminal.
   The command will now print out a list of all known devices for your account. If wanted select the one you want and paste the value in the `config.json` file at the `deviceId` field of the corresponding accessory definition.
   It will also generate a file in which the session is stored in the Homebridge folder.
