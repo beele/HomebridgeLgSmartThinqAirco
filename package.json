@@ -1,6 +1,6 @@
 {
   "name": "homebridge-lg-airco",
-  "version": "0.1.0-beta4",
+  "version": "0.1.0",
   "description": "Homebridge plugin to control a Smart Thinq enabled LG airco unit. Makes use of WideQ => https://github.com/sampsyo/wideq",
   "main": "src/index.js",
   "scripts": {

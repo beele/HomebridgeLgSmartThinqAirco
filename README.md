@@ -47,10 +47,9 @@ After that an update of the state is performed every minute.
 
 ## Setup guide
 
-- Open a terminal on the device where you installed this plugin and type: `npm root -g`
-- Navigate to the path that the previous command has printed out
-- Enter the folder of the plugin to where the wideq files are: `cd homebridge-lg-airco/resources/wideq`
-- Execute the command `python3 example.py -c country-code -l language-code -p path-to-homebridge-folder` where you should replace `country-code`, `language-code` and `path-to-homebridge-folder` with the respective values.
+- Open a terminal on the device where you installed this plugin and type: `cd "$(npm root -g)" && cd homebridge-lg-airco/resources/wideq`
+- Your terminal should navigate to the folder, if any error comes up the plugin was not installed correctly!
+- Execute the command `python3 example.py -c country-code -l language-code -p path-to-wideq-file-in-homebridge-folder` where you should replace `country-code`, `language-code` and `path-to-homebridge-folder` with the respective values.
   For example: `python3 example.py -c BE -l en-UK -p /home/pi/.homebridge/wideq_state.json`
 - Make sure the wideq_state.json does not exist yet! If the file is corrupted, delete it before executing the command again!
 - Follow the instructions on the screen, and paste the resulting URL back into the terminal.
