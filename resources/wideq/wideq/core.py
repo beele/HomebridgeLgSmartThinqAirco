@@ -7,9 +7,12 @@ import hashlib
 import hmac
 import datetime
 import requests
-import urllib3
+import logging
+from typing import Any, Dict, List, Tuple
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
-GATEWAY_URL = 'https://kic.lgthinq.com:46030/api/common/gatewayUriList'
+GATEWAY_URL = 'https://kic.lgthinq.com:46030'
 APP_KEY = 'wideq'
 SECURITY_KEY = 'nuts_securitykey'
 DATA_ROOT = 'lgedmRoot'
@@ -18,6 +21,12 @@ CLIENT_ID = 'LGAO221A02'
 OAUTH_SECRET_KEY = 'c053c2a6ddeb7ad97cb0eed0dcb31cf8'
 OAUTH_CLIENT_KEY = 'LGAO221A02'
 DATE_FORMAT = '%a, %d %b %Y %H:%M:%S +0000'
+DEFAULT_COUNTRY = 'US'
+DEFAULT_LANGUAGE = 'en-US'
+
+RETRY_COUNT = 5  # Anecdotally this seems sufficient.
+RETRY_FACTOR = 0.5
+RETRY_STATUSES = (502, 503, 504)
 
 # Fix for dh-key-too-small error in python 3.7.x
 requests.packages.urllib3.disable_warnings()
@@ -28,12 +37,71 @@ except AttributeError:
     # no pyopenssl support used / needed / available
     pass
 
+def get_wideq_logger() -> logging.Logger:
+    level = logging.INFO
+    fmt = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+    datefmt = "%Y-%m-%d %H:%M:%S"
+    logger = logging.getLogger("wideq")
+    logger.setLevel(level)
 
-def gen_uuid():
+    try:
+        import colorlog  # type: ignore
+        colorfmt = f"%(log_color)s{fmt}%(reset)s"
+        handler = colorlog.StreamHandler()
+        handler.setFormatter(
+            colorlog.ColoredFormatter(
+                colorfmt,
+                datefmt=datefmt,
+                reset=True,
+                log_colors={
+                    "DEBUG": "cyan",
+                    "INFO": "green",
+                    "WARNING": "yellow",
+                    "ERROR": "red",
+                    "CRITICAL": "red",
+                },
+            )
+        )
+    except ImportError:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
+
+    logger.addHandler(handler)
+    return logger
+
+
+LOGGER = get_wideq_logger()
+
+
+def retry_session():
+    """Get a Requests session that retries HTTP and HTTPS requests.
+    """
+    # Adapted from:
+    # https://www.peterbe.com/plog/best-practice-with-retries-with-requests
+    session = requests.Session()
+    retry = Retry(
+        total=RETRY_COUNT,
+        read=RETRY_COUNT,
+        connect=RETRY_COUNT,
+        backoff_factor=RETRY_FACTOR,
+        status_forcelist=RETRY_STATUSES,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
+
+def set_log_level(level: int):
+    logger = get_wideq_logger()
+    logger.setLevel(level)
+
+
+def gen_uuid() -> str:
     return str(uuid.uuid4())
 
 
-def oauth2_signature(message, secret):
+def oauth2_signature(message: str, secret: str) -> bytes:
     """Get the base64-encoded SHA-1 HMAC digest of a string, as used in
     OAauth2 request signatures.
 
@@ -47,7 +115,7 @@ def oauth2_signature(message, secret):
     return base64.b64encode(digest)
 
 
-def get_list(obj, key):
+def get_list(obj, key: str) -> List[Dict[str, Any]]:
     """Look up a list using a key from an object.
 
     If `obj[key]` is a list, return it unchanged. If is something else,
@@ -77,15 +145,9 @@ class APIError(Exception):
 class NotLoggedInError(APIError):
     """The session is not valid or expired."""
 
-    def __init__(self):
-        pass
-
 
 class NotConnectedError(APIError):
     """The service can't contact the specified device."""
-
-    def __init__(self):
-        pass
 
 
 class TokenError(APIError):
@@ -93,6 +155,16 @@ class TokenError(APIError):
 
     def __init__(self):
         pass
+
+
+class FailedRequestError(APIError):
+    """A failed request typically indicates an unsupported control on a
+    device.
+    """
+
+
+class InvalidRequestError(APIError):
+    """The server rejected a request as invalid."""
 
 
 class MonitorError(APIError):
@@ -105,7 +177,15 @@ class MonitorError(APIError):
         self.code = code
 
 
-def lgedm_post(url, data=None, access_token=None, session_id=None):
+API_ERRORS = {
+    "0102": NotLoggedInError,
+    "0106": NotConnectedError,
+    "0100": FailedRequestError,
+    9000: InvalidRequestError,  # Surprisingly, an integer (not a string).
+}
+
+
+def lgedm_post(api_root, path, data=None, access_token=None, session_id=None):
     """Make an HTTP request in the format used by the API servers.
 
     In this format, the request POST data sent as JSON under a special
@@ -116,7 +196,6 @@ def lgedm_post(url, data=None, access_token=None, session_id=None):
     authenticated requests. They are not required, for example, to load
     the gateway server data or to start a session.
     """
-
     headers = {
         'x-thinq-application-key': APP_KEY,
         'x-thinq-security-key': SECURITY_KEY,
@@ -127,7 +206,19 @@ def lgedm_post(url, data=None, access_token=None, session_id=None):
     if session_id:
         headers['x-thinq-jsessionId'] = session_id
 
-    res = requests.post(url, json={DATA_ROOT: data}, headers=headers)
+    with retry_session() as session:
+        res = session.post(urljoin(api_root + '/', path),
+                           json={DATA_ROOT: data}, headers=headers)
+
+        if "rtiControl" in path:
+            session.post(
+                urljoin(api_root + '/', 'rti/delControlPermission'),
+                json={
+                    DATA_ROOT: {'deviceId': data.get('deviceId')}
+                }, headers=headers
+            )
+            # Ignore the response, since it's not a breaking error!
+
     out = res.json()[DATA_ROOT]
 
     # Check for API errors.
@@ -135,27 +226,12 @@ def lgedm_post(url, data=None, access_token=None, session_id=None):
         code = out['returnCd']
         if code != '0000':
             message = out['returnMsg']
-            if code == "0102":
-                raise NotLoggedInError()
-            elif code == "0106":
-                raise NotConnectedError()
+            if code in API_ERRORS:
+                raise API_ERRORS[code](code, message)
             else:
                 raise APIError(code, message)
 
     return out
-
-
-def gateway_info(country, language):
-    """Load information about the hosts to use for API interaction.
-
-    `country` and `language` are codes, like "US" and "en-US,"
-    respectively.
-    """
-
-    return lgedm_post(
-        GATEWAY_URL,
-        {'countryCode': country, 'langCode': language},
-    )
 
 
 def oauth_url(auth_base, country, language):
@@ -191,14 +267,13 @@ def login(api_root, access_token, country, language):
     return information about the session.
     """
 
-    url = urljoin(api_root + '/', 'member/login')
     data = {
         'countryCode': country,
         'langCode': language,
         'loginType': 'EMP',
         'token': access_token,
     }
-    return lgedm_post(url, data)
+    return lgedm_post(api_root, 'member/login', data)
 
 
 def refresh_auth(oauth_root, refresh_token):
@@ -234,7 +309,8 @@ def refresh_auth(oauth_root, refresh_token):
         'Accept': 'application/json',
     }
 
-    res = requests.post(token_url, data=data, headers=headers)
+    with retry_session() as session:
+        res = session.post(token_url, data=data, headers=headers)
     res_data = res.json()
 
     if res_data['status'] != 1:
@@ -251,13 +327,34 @@ class Gateway(object):
         self.language = language
 
     @classmethod
-    def discover(cls, country, language):
-        gw = gateway_info(country, language)
+    def discover(cls, country, language) -> 'Gateway':
+        """Load information about the hosts to use for API interaction.
+
+        `country` and `language` are codes, like "US" and "en-US,"
+        respectively.
+        """
+        gw = lgedm_post(GATEWAY_URL, '/api/common/gatewayUriList',
+                        {'countryCode': country, 'langCode': language})
         return cls(gw['empUri'], gw['thinqUri'], gw['oauthUri'],
                    country, language)
 
     def oauth_url(self):
         return oauth_url(self.auth_base, self.country, self.language)
+
+    def serialize(self) -> Dict[str, str]:
+        return {
+            'auth_base': self.auth_base,
+            'api_root': self.api_root,
+            'oauth_root': self.oauth_root,
+            'country': self.country,
+            'language': self.language,
+        }
+
+    @classmethod
+    def deserialize(cls, data: Dict[str, Any]) -> 'Gateway':
+        return cls(data['auth_base'], data['api_root'], data['oauth_root'],
+                   data.get('country', DEFAULT_COUNTRY),
+                   data.get('language', DEFAULT_LANGUAGE))
 
 
 class Auth(object):
@@ -274,7 +371,7 @@ class Auth(object):
         access_token, refresh_token = parse_oauth_callback(url)
         return cls(gateway, access_token, refresh_token)
 
-    def start_session(self):
+    def start_session(self) -> Tuple['Session', List[Dict[str, Any]]]:
         """Start an API session for the logged-in user. Return the
         Session object and a list of the user's devices.
         """
@@ -292,9 +389,15 @@ class Auth(object):
                                         self.refresh_token)
         return Auth(self.gateway, new_access_token, self.refresh_token)
 
+    def serialize(self) -> Dict[str, str]:
+        return {
+            'access_token': self.access_token,
+            'refresh_token': self.refresh_token,
+        }
+
 
 class Session(object):
-    def __init__(self, auth, session_id):
+    def __init__(self, auth, session_id) -> None:
         self.auth = auth
         self.session_id = session_id
 
@@ -305,10 +408,10 @@ class Session(object):
         request from an active Session.
         """
 
-        url = urljoin(self.auth.gateway.api_root + '/', path)
-        return lgedm_post(url, data, self.auth.access_token, self.session_id)
+        return lgedm_post(self.auth.gateway.api_root, path, data,
+                          self.auth.access_token, self.session_id)
 
-    def get_devices(self):
+    def get_devices(self) -> List[Dict[str, Any]]:
         """Get a list of devices associated with the user's account.
 
         Return a list of dicts with information about the devices.
