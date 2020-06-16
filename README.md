@@ -23,19 +23,19 @@ Next open the config.json that contains your Homebridge configuration and add a 
 }
 ```
 
-The accessory name has to be `LgAirCooler` to link to the plugin.
-The `name` field is for the display name in the HomeKit app.
-The `deviceId` field is the device id for you cooler, optional, only provide this if you have more than one AC unit! instructions below how to obtain it!
-The `country` field is the 2 letter country code (XX) of the chosen country of your LG SmartThinq account.
-The `language` field is the 4 letter language code (xx-XX) of the chosen language of your LG SmartThinq account.
-The `model` field is the model of the AC unit being used. This value is used to show in the information section.
-The `maxCoolingTemp` field is the maximum settable temperature when in COOLING mode.
-The `minCoolingTemp` field is the minimum settable temperature when in COOLING mode.
-The `maxHeatingTemp` field is the maximum settable temperature when in HEATING mode.
-The `minHeatingTemp` field is the minimum settable temperature when in HEATING mode.
-The `updateInterval` field is the interval that is used to fetch new state data from the AC unit. In milliseconds!
-The `debug` field is the boolean that enables or disables debug logging, set this to false unless collecting logs.
-The `dummy` field is the boolean that enables mocking out the LG API and will instead use a dummy AC unit with no network calls, only for development & testing!
+The accessory name has to be `LgAirCooler` to link to the plugin.  
+The `name` field is for the display name in the HomeKit app.  
+The `deviceId` field is the device id for you cooler, optional, only provide this if you have more than one AC unit! instructions below how to obtain it!  
+The `country` field is the 2 letter country code (XX) of the chosen country of your LG SmartThinq account.  
+The `language` field is the 4 letter language code (xx-XX) of the chosen language of your LG SmartThinq account.  
+The `model` field is the model of the AC unit being used. This value is used to show in the information section.  
+The `maxCoolingTemp` field is the maximum settable temperature when in COOLING mode.  
+The `minCoolingTemp` field is the minimum settable temperature when in COOLING mode.  
+The `maxHeatingTemp` field is the maximum settable temperature when in HEATING mode.  
+The `minHeatingTemp` field is the minimum settable temperature when in HEATING mode.  
+The `updateInterval` field is the interval that is used to fetch new state data from the AC unit. In milliseconds!  
+The `debug` field is the boolean that enables or disables debug logging, set this to false unless collecting logs.  
+The `dummy` field is the boolean that enables mocking out the LG API and will instead use a dummy AC unit with no network calls, only for development & testing!  
 
 The initial state will be fetched shortly after booting your Homebridge instance.
 After that an update of the state is performed every minute.
