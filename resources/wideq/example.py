@@ -246,6 +246,10 @@ def example(country: str, language: str, path: str, verbose: bool,
             LOGGER.error(exc.msg)
             sys.exit(1)
 
+        except:
+            LOGGER.error(sys.exc_info()[0])
+            sys.exit(1)
+
     # Save the updated state.
     state = client.dump()
     with open(STATE_FILE, 'w') as f:
