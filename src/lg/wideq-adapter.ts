@@ -51,7 +51,7 @@ export class WideqAdapter {
 
     public async getStatus(deviceId: string): Promise<AirCoolerStatus> {
         try {
-            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-p', this.storagePath, this.debug ? '-v' : null, 'ac-mon', deviceId], true);
+            const data: string = await PythonUtils.executePython3(WideqAdapter.wideqFolder, WideqAdapter.wideqScriptFile, ['-c', this.country, '-l', this.language, '-p', this.storagePath, this.debug ? '-v' : null, 'ac-mon', deviceId]);
             this.logDebug(data);
 
             const dataPieces: string[] = data.split(';').map(s => s.trim());

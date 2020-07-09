@@ -105,7 +105,7 @@ def ac_mon(client, device_id):
                         'on' if state.is_on else 'off'
                     )
                 )
-
+                break
     except KeyboardInterrupt:
         pass
     finally:
